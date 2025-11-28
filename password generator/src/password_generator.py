@@ -88,7 +88,7 @@ class MemorablePassword(PasswordGenerator):
             self._vocabularies, k=self._num_of_words)
         vocab_to_user = [word.upper() if random.choice(
             [True, False]) else word.lower() for word in password_words]
-        return "".join(vocab_to_user)
+        return self._separator.join(vocab_to_user)
 
 
 if __name__ == '__main__':
