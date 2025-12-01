@@ -1,3 +1,5 @@
+from tabulate import tabulate
+
 class ContactBook:
     """A simple contact book to manage contacts with name, phone, and email."""
     
@@ -75,7 +77,15 @@ class ContactBook:
         """Return string representation of the contact book."""
         if not self.contacts:
             return "Contact book is empty"
-        return str(self.contacts)
+        
+        headers = ["Name", "Phone", "Email"]
+        table_data = [[name, contact["phone"], contact["email"] or ""] 
+                      for name, contact in self.contacts.items()]
+
+        return tabulate(table_data, headers=headers, tablefmt="grid")
+        
+        
+        
 
 
 if __name__ == "__main__":
@@ -111,4 +121,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Exception occured \n: {e}")
 
-    print(f"This is the currect contact book: {book}")
+    print(f"This is the currect contact book\n: {book}")
