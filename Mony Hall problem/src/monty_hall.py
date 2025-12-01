@@ -42,16 +42,16 @@ def simulate_monty_hall(number_of_games: int) -> tuple[float, float]:
         number_of_game: Number of simulations to run.
 
     Returns:
-        A tuple (switch_win_rate, stay_win_rate), each rounded to 2 decimals.
+        A tuple (num_wins_with_switching, num_wins_without_switching), each rounded to 2 decimals.
     """
     simulate_without_switching = sum(
         monty_hall(False) for _ in range(0, number_of_games)
     )
     simulate_with_switching = sum(monty_hall(True) for _ in range(0, number_of_games))
-    return round(simulate_with_switching / number_of_games, 2), round(
-        simulate_without_switching / number_of_games, 2
-    )
+    return simulate_without_switching, simulate_with_switching
 
 
 if __name__ == "__main__":
-    print(simulate_monty_hall(500))
+    simulate_without_switching, simulate_with_switching = simulate_monty_hall(500)
+    print(simulate_without_switching, simulate_with_switching)
+    print(round(simulate_without_switching / 500, 2), round(simulate_with_switching / 500, 2))
