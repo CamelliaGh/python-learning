@@ -3,6 +3,7 @@ import time
 from monty_hall import simulate_monty_hall
 
 sl.title("Monty Hall Simulation")
+sl.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Monty_open_door.svg/1200px-Monty_open_door.svg.png", width=400)
 
 # Get number of games to simulate
 num_games = sl.number_input(
