@@ -1,0 +1,5 @@
+python-dotenv
+smtplib
+ssl
+email.mime.text
+email.mime.multipart
