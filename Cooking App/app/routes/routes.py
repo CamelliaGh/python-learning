@@ -4,6 +4,7 @@ This module sets up the FastAPI application and includes all route modules.
 """
 
 from fastapi import FastAPI
+
 from app.routes.recipes import router as recipes_router
 
 app = FastAPI()
