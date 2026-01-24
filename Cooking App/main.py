@@ -11,28 +11,30 @@ from fastapi.staticfiles import StaticFiles
 from app.db.session import Base, engine
 from app.routes.routes import router
 
+
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application instance.
-    
+
     Sets up the database tables, static file serving, CORS middleware,
     and includes the API router.
-    
+
     Returns:
         FastAPI: The configured FastAPI application instance.
     """
-    app = FastAPI()
+    app_instance = FastAPI()
     Base.metadata.create_all(bind=engine)
-    
-    app.mount("/static", StaticFiles(directory="static"), name="static")
 
-    app.add_middleware(
+    app_instance.mount("/static", StaticFiles(directory="static"), name="static")
+
+    app_instance.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
-    app.include_router(router, prefix="/api")
-    return app
+    app_instance.include_router(router, prefix="/api")
+    return app_instance
+
 
 app = create_app()
