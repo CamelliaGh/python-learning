@@ -1,3 +1,10 @@
+"""Interactive script for adding recipes to the database.
+
+This script provides a command-line interface for users to input recipe information
+(name, ingredients, and steps) and save it to the database. It handles duplicate
+detection and ingredient normalization.
+"""
+
 import os
 import sys
 from app.db.models import Recipe, Ingredient
@@ -12,6 +19,16 @@ if PROJECT_ROOT not in sys.path:
 
 
 def read_recipe():
+    """Read recipe information from user input.
+    
+    Prompts the user for recipe name, ingredients, and steps.
+    
+    Returns:
+        tuple: A tuple containing (name, ingredients, steps).
+            - name: The recipe name as a string.
+            - ingredients: A list of ingredient names.
+            - steps: The recipe steps as a string.
+    """
     name = read_name()
     ingredients = prompt_for_ingredients()
     steps = prompt_for_steps()
@@ -19,6 +36,11 @@ def read_recipe():
 
 
 def read_name():
+    """Prompt the user for a recipe name.
+    
+    Returns:
+        str: The recipe name entered by the user, or None if empty.
+    """
     name = input("🍽️ Recipe name: ").strip()
     if not name:
         print("❌ Recipe name is required.")
@@ -27,6 +49,13 @@ def read_name():
 
 
 def prompt_for_ingredients():
+    """Prompt the user to enter ingredients one by one.
+    
+    Continues reading ingredients until an empty line is entered.
+    
+    Returns:
+        List[str]: A list of ingredient names entered by the user.
+    """
     print("Enter ingredients (one per line). Leave empty and press Enter to finish.")
     ingredients = []
     while True:
@@ -42,6 +71,13 @@ def prompt_for_ingredients():
 
 
 def prompt_for_steps():
+    """Prompt the user to enter recipe steps.
+    
+    Continues reading lines until "END" is entered on a line by itself.
+    
+    Returns:
+        str: The recipe steps as a newline-separated string.
+    """
     print("Enter steps (multiple lines). Type END on a line by itself to finish.")
     lines = []
     while True:
@@ -56,6 +92,19 @@ def prompt_for_steps():
 
 
 def save_recipe(name, steps, ingredients_input):
+    """Save a recipe to the database.
+    
+    Checks for duplicate recipes (case-insensitive) and reuses existing ingredients
+    or creates new ones as needed. Ingredients are stored in lowercase.
+    
+    Args:
+        name: The name of the recipe.
+        steps: The recipe steps as a string.
+        ingredients_input: A list of ingredient names to associate with the recipe.
+    
+    Raises:
+        Exception: If an error occurs during database operations.
+    """
     session = SessionLocal()
     try:
         # Check for duplicates (case-insensitive)

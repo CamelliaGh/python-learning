@@ -1,3 +1,9 @@
+"""Database models for the Cooking App.
+
+This module defines the SQLAlchemy ORM models for recipes, ingredients, and reviews,
+including the many-to-many relationship between recipes and ingredients.
+"""
+
 from sqlalchemy import Column, ForeignKey, Integer, String, Table, Text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import relationship

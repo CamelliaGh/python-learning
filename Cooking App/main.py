@@ -1,10 +1,25 @@
+"""Main application entry point for the Cooking App.
+
+This module creates and configures the FastAPI application instance, including
+database initialization, CORS middleware, static file serving, and route registration.
+"""
+
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+from app.db.session import Base, engine
 from app.routes.routes import router
-from app.db.session import engine, Base
 
 def create_app() -> FastAPI:
+    """Create and configure the FastAPI application instance.
+    
+    Sets up the database tables, static file serving, CORS middleware,
+    and includes the API router.
+    
+    Returns:
+        FastAPI: The configured FastAPI application instance.
+    """
     app = FastAPI()
     Base.metadata.create_all(bind=engine)
     

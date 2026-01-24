@@ -1,3 +1,9 @@
+"""FastAPI route handlers for recipe-related endpoints.
+
+This module defines all the API endpoints for managing and retrieving recipes,
+including pagination, filtering by ingredients, and retrieving popular recipes.
+"""
+
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -18,6 +24,18 @@ router = APIRouter()
 
 @router.get("/recipes/{recipe_id}", response_model=RecipeDetail)
 def get_recipe(recipe_id: int, db: Session = Depends(get_db)):
+    """Retrieve a specific recipe by ID with its average rating.
+    
+    Args:
+        recipe_id: The unique identifier of the recipe to retrieve.
+        db: The database session (injected dependency).
+    
+    Returns:
+        RecipeDetail: The recipe details including average rating.
+    
+    Raises:
+        HTTPException: 404 if the recipe is not found.
+    """
     recipe = db_helpers.get_db_recipe(recipe_id, db)
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
@@ -38,6 +56,16 @@ def get_all_recipes_paginated(
     per_page: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
+    """Retrieve all recipes with pagination support.
+    
+    Args:
+        page: The page number to retrieve (default: 1, minimum: 1).
+        per_page: Number of recipes per page (default: 10, range: 1-100).
+        db: The database session (injected dependency).
+    
+    Returns:
+        PaginatedRecipes: A paginated response containing recipes and pagination metadata.
+    """
     items, total, pages = db_helpers.get_db_recipes(page, per_page, db)
 
     return PaginatedRecipes(
@@ -61,6 +89,18 @@ def get_all_recipes_paginated(
 
 @router.get("/recipes/{recipe_id}/steps", response_model=StepsOut)
 def get_recipe_steps_array(recipe_id: int, db: Session = Depends(get_db)):
+    """Retrieve recipe steps as an array of strings.
+    
+    Args:
+        recipe_id: The unique identifier of the recipe.
+        db: The database session (injected dependency).
+    
+    Returns:
+        StepsOut: The recipe with steps split into an array of strings.
+    
+    Raises:
+        HTTPException: 404 if the recipe is not found.
+    """
     recipe = db_helpers.get_recipe(recipe_id, db)
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
@@ -72,6 +112,18 @@ def get_recipe_steps_array(recipe_id: int, db: Session = Depends(get_db)):
 
 @router.post("/recipes/by-ingredients", response_model=List[RecipeOut])
 def get_recipes_by_ingredients(payload: IngredientsIn, db: Session = Depends(get_db)):
+    """Find recipes that contain all of the specified ingredients.
+    
+    Args:
+        payload: Request body containing a list of ingredient names.
+        db: The database session (injected dependency).
+    
+    Returns:
+        List[RecipeOut]: List of recipes that contain all the specified ingredients.
+    
+    Raises:
+        HTTPException: 400 if ingredients are missing or empty.
+    """
     if not payload.ingredients:
         raise HTTPException(status_code=400, detail='Missing "ingredients" in request')
 
@@ -88,6 +140,17 @@ def get_recipes_by_ingredients(payload: IngredientsIn, db: Session = Depends(get
 
 @router.get("/recipes/random", response_model=RecipeOut)
 def get_random_recipe(db: Session = Depends(get_db)):
+    """Retrieve a random recipe from the database.
+    
+    Args:
+        db: The database session (injected dependency).
+    
+    Returns:
+        RecipeOut: A randomly selected recipe.
+    
+    Raises:
+        HTTPException: 404 if no recipes exist in the database.
+    """
     recipe = db_helpers.get_random_recipe(db)
     if not recipe:
         raise HTTPException(status_code=404, detail="No recipes found")
@@ -96,7 +159,18 @@ def get_random_recipe(db: Session = Depends(get_db)):
 
 @router.get("/recipes/popular", response_model=List[RecipeDetail])
 def get_popular_recipes(db: Session = Depends(get_db)):
-    recipes = get_popular_recipes(db)
+    """Retrieve the top 10 most popular recipes based on average rating.
+    
+    Args:
+        db: The database session (injected dependency).
+    
+    Returns:
+        List[RecipeDetail]: List of top 10 recipes with their average ratings.
+    
+    Raises:
+        HTTPException: 404 if no recipes with ratings exist.
+    """
+    recipes = db_helpers.get_popular_recipes(db)
     if not recipes:
         raise HTTPException(status_code=404, detail="No recipes found")
     return recipes
