@@ -4,8 +4,9 @@ This module provides functions to convert SQLAlchemy ORM models into Pydantic
 models suitable for API responses.
 """
 
-from app.routes.schemas import RecipeOut
 from app.db.models import Recipe
+from app.routes.schemas import RecipeOut
+
 
 def serialize_recipe(recipe: Recipe) -> RecipeOut:
     """Serialize a Recipe database model to a RecipeOut Pydantic model.

@@ -29,6 +29,16 @@ recipe_ingredient = Table(
 
 
 class Ingredient(Base):
+    """Ingredient model for storing recipe ingredients.
+    
+    Represents an ingredient that can be used in multiple recipes.
+    Has a many-to-many relationship with Recipe through the recipe_ingredient table.
+    
+    Attributes:
+        id (int): Primary key for the ingredient
+        name (str): Name of the ingredient (max 50 characters)
+        recipes (List[Recipe]): List of recipes that use this ingredient
+    """
     __tablename__ = "ingredient"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -43,6 +53,18 @@ class Ingredient(Base):
 
 
 class Recipe(Base):
+    """Recipe model for storing cooking recipes.
+    
+    Represents a recipe with ingredients, preparation steps, and associated reviews.
+    Has many-to-many relationships with ingredients and one-to-many with reviews.
+    
+    Attributes:
+        id (int): Primary key for the recipe
+        name (str): Name of the recipe (max 100 characters)
+        steps (str): Detailed cooking instructions/steps
+        ingredients (List[Ingredient]): List of ingredients needed for this recipe
+        reviews (List[Review]): List of reviews for this recipe
+    """
     __tablename__ = "recipe"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -64,6 +86,17 @@ class Recipe(Base):
 
 
 class Review(Base):
+    """Review model for storing recipe ratings and feedback.
+    
+    Represents a user review for a specific recipe. Each review is linked
+    to a recipe through a foreign key relationship.
+    
+    Attributes:
+        id (int): Primary key for the review
+        recipe_id (int): Foreign key linking to the recipe being reviewed
+        rating (int): Numerical rating for the recipe
+        recipe (Recipe): The recipe this review belongs to
+    """
     __tablename__ = "review"
 
     id = Column(Integer, primary_key=True, index=True)

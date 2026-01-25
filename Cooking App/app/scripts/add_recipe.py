@@ -7,7 +7,8 @@ detection and ingredient normalization.
 
 import os
 import sys
-from app.db.models import Recipe, Ingredient
+
+from app.db.models import Ingredient, Recipe
 from app.db.session import SessionLocal
 
 # Ensure project root is importable when running from ./scripts/

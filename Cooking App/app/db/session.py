@@ -4,10 +4,10 @@ This module handles database connection setup, session creation, and provides
 a dependency injection function for FastAPI route handlers.
 """
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker, scoped_session
 from typing import Generator
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, scoped_session, sessionmaker
 
 DATABASE_URL = "sqlite:///./recipes.db"
 
