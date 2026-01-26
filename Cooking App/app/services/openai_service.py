@@ -21,6 +21,7 @@ USER_PROMPT = "What is the best cooking recipe in the world?"
 TEMPERATURE = 0.7
 MODEL = os.environ.get("OPENAI_MODEL")
 
+
 completion = client.chat.completions.create(
     model=MODEL,
     messages=[

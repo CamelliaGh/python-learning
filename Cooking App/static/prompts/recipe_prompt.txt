@@ -1,0 +1,9 @@
+Act as a professional chef. Using the following ingredients: {{ingredients}}, create a detailed {{meal_type}} recipe. Please include the following in your response:
+
+- A creative recipe title
+- A list of all ingredients with exact measurements
+- Step-by-step cooking instructions
+- Estimated preparation and cooking time
+- Serving size
+
+Ensure the recipe uses only the provided ingredients and is appropriate for the specified meal type. Present your response in a clear, organized format.

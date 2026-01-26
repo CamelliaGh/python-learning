@@ -1,0 +1,5 @@
+Rewrite the following sentence in a different way that retains its original meaning:
+
+Original: {{sentence}}
+
+Return a list of up to {{max_versions}} paraphrased versions as plain text strings.
