@@ -8,19 +8,13 @@ requests with customizable prompts and parameters.
 
 import logging
 import os
-from pathlib import Path
 
-from dotenv import load_dotenv
 from openai import APIError, OpenAI
 
 from app.prompts import render_prompt_from_file
+from app.config import OPENAI_DEFAULT_MODEL, OPENAI_DEFAULT_TEMPERATURE
 
-env_path = Path(__file__).parent.parent.parent / ".env"
-if not env_path.exists():
-    # Fallback: try current working directory
-    env_path = Path.cwd() / ".env"
-load_dotenv(env_path)
-
+# Load OpenAI credentials from environment (loaded by config.py)
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL")
 
@@ -30,7 +24,13 @@ client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 
-def call_api(system_prompt_name, user_prompt_name, variables, model="gpt-4o", temperature=0.7):
+def call_api(
+    system_prompt_name,
+    user_prompt_name,
+    variables,
+    model=OPENAI_DEFAULT_MODEL,
+    temperature=OPENAI_DEFAULT_TEMPERATURE,
+):
     """
     Renders prompts, sends them to the language model, and returns the response.
 
@@ -97,5 +97,11 @@ def call_api(system_prompt_name, user_prompt_name, variables, model="gpt-4o", te
 
 
 if __name__ == "__main__":
-    openai_model = os.environ.get("OPENAI_MODEL")
-    call_api("system_recipe_prompt","user_recipe_prompt", {'onion'}, openai_model, 0.7)
+    openai_model = os.environ.get("OPENAI_MODEL") or OPENAI_DEFAULT_MODEL
+    call_api(
+        "system_recipe_prompt",
+        "user_recipe_prompt",
+        {"onion"},
+        openai_model,
+        OPENAI_DEFAULT_TEMPERATURE,
+    )

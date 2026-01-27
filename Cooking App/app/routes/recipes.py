@@ -12,6 +12,27 @@ from sqlalchemy.orm import Session
 
 import app.db.db_helpers as db_helpers
 import app.tools.openai_response_parser as openai_parser
+from app.config import (
+    ERROR_EMPTY_INGREDIENTS_LIST,
+    ERROR_FAILED_TO_GENERATE_RECIPE,
+    ERROR_FAILED_TO_PARSE_AI_RESPONSE,
+    ERROR_INVALID_AI_RESPONSE_FORMAT,
+    ERROR_INVALID_RECIPE_FORMAT,
+    ERROR_MISSING_INGREDIENTS,
+    ERROR_NO_INGREDIENTS_PROVIDED,
+    ERROR_NO_RECIPES_FOUND,
+    ERROR_RECIPE_NOT_FOUND,
+    HTTP_STATUS_BAD_REQUEST,
+    HTTP_STATUS_INTERNAL_SERVER_ERROR,
+    HTTP_STATUS_NOT_FOUND,
+    PAGINATION_DEFAULT_PAGE,
+    PAGINATION_DEFAULT_PER_PAGE,
+    PAGINATION_MAX_PER_PAGE,
+    PAGINATION_MIN_PAGE,
+    PAGINATION_MIN_PER_PAGE,
+    PROMPT_SYSTEM_RECIPE_PROMPT,
+    PROMPT_USER_RECIPE_PROMPT,
+)
 from app.db.session import get_db
 from app.routes.schemas import (
     IngredientsIn,
@@ -22,15 +43,19 @@ from app.routes.schemas import (
 )
 from app.services.openai_service import call_api as openai
 from app.tools.openai_response_parser import RecipeParseError
-from app.tools.serializers import parse_steps, serialize_recipe
+from app.tools.serializers import parse_steps, serialize_recipe, serialize_recipe_detail
 
 router = APIRouter()
 
 
 @router.get("/recipes", response_model=PaginatedRecipes)
 def get_all_recipes_paginated(
-    page: int = Query(1, ge=1),
-    per_page: int = Query(10, ge=1, le=100),
+    page: int = Query(PAGINATION_DEFAULT_PAGE, ge=PAGINATION_MIN_PAGE),
+    per_page: int = Query(
+        PAGINATION_DEFAULT_PER_PAGE,
+        ge=PAGINATION_MIN_PER_PAGE,
+        le=PAGINATION_MAX_PER_PAGE,
+    ),
     db: Session = Depends(get_db),
 ):
     """Retrieve all recipes with pagination support.
@@ -46,15 +71,7 @@ def get_all_recipes_paginated(
     items, total, pages = db_helpers.get_db_recipes(page, per_page, db)
 
     return PaginatedRecipes(
-        recipes=[
-            RecipeOut(
-                id=recipe.id,
-                name=recipe.name,
-                ingredients=[i.name for i in recipe.ingredients],
-                steps=recipe.steps,
-            )
-            for recipe in items
-        ],
+        recipes=[serialize_recipe(recipe) for recipe in items],
         total=total,
         page=page,
         per_page=per_page,
@@ -80,8 +97,10 @@ def get_recipe_steps_array(recipe_id: int, db: Session = Depends(get_db)):
     """
     recipe = db_helpers.get_recipe(recipe_id, db)
     if not recipe:
-        raise HTTPException(status_code=404, detail="Recipe not found")
-    
+        raise HTTPException(
+            status_code=HTTP_STATUS_NOT_FOUND, detail=ERROR_RECIPE_NOT_FOUND
+        )
+
     steps_list = parse_steps(recipe.steps)
     return StepsOut(recipe_id=recipe.id, name=recipe.name, steps=steps_list)
 
@@ -101,13 +120,17 @@ def get_recipes_by_ingredients(payload: IngredientsIn, db: Session = Depends(get
         HTTPException: 400 if ingredients are missing or empty.
     """
     if not payload.ingredients:
-        raise HTTPException(status_code=400, detail='Missing "ingredients" in request')
+        raise HTTPException(
+            status_code=HTTP_STATUS_BAD_REQUEST, detail=ERROR_MISSING_INGREDIENTS
+        )
 
     ingredient_names = [
         name.strip().lower() for name in payload.ingredients if name.strip()
     ]
     if not ingredient_names:
-        raise HTTPException(status_code=400, detail="Empty ingredients list")
+        raise HTTPException(
+            status_code=HTTP_STATUS_BAD_REQUEST, detail=ERROR_EMPTY_INGREDIENTS_LIST
+        )
 
     recipes = db_helpers.get_recipe_by_ingredient(ingredient_names, db)
     return [serialize_recipe(recipe) for recipe in recipes]
@@ -128,7 +151,9 @@ def get_random_recipe(db: Session = Depends(get_db)):
     """
     recipe = db_helpers.get_random_recipe(db)
     if not recipe:
-        raise HTTPException(status_code=404, detail="No recipes found")
+        raise HTTPException(
+            status_code=HTTP_STATUS_NOT_FOUND, detail=ERROR_NO_RECIPES_FOUND
+        )
     return serialize_recipe(recipe)
 
 
@@ -147,13 +172,12 @@ def get_popular_recipes(db: Session = Depends(get_db)):
     """
     recipe_ratings = db_helpers.get_popular_recipes(db)
     if not recipe_ratings:
-        raise HTTPException(status_code=404, detail="No recipes found")
-    
-    return [
-        RecipeDetail(
-            **serialize_recipe(recipe).model_dump(),
-            average_rating=avg_rating,
+        raise HTTPException(
+            status_code=HTTP_STATUS_NOT_FOUND, detail=ERROR_NO_RECIPES_FOUND
         )
+
+    return [
+        serialize_recipe_detail(recipe, avg_rating)
         for recipe, avg_rating in recipe_ratings
     ]
 
@@ -174,16 +198,12 @@ def get_recipe(recipe_id: int, db: Session = Depends(get_db)):
     """
     recipe = db_helpers.get_recipe(recipe_id, db)
     if not recipe:
-        raise HTTPException(status_code=404, detail="Recipe not found")
+        raise HTTPException(
+            status_code=HTTP_STATUS_NOT_FOUND, detail=ERROR_RECIPE_NOT_FOUND
+        )
 
     average = db_helpers.avg_rating(recipe, db)
-    return RecipeDetail(
-        id=recipe.id,
-        name=recipe.name,
-        ingredients=[i.name for i in recipe.ingredients],
-        steps=recipe.steps,
-        average_rating=average,
-    )
+    return serialize_recipe_detail(recipe, average)
 
 
 @router.post("/recipes/generate")
@@ -211,17 +231,22 @@ def generate_recipe(payload: IngredientsIn):
     """
     ingredients = payload.ingredients or []
     if not ingredients:
-        raise HTTPException(status_code=400, detail="No ingredients provided")
+        raise HTTPException(
+            status_code=HTTP_STATUS_BAD_REQUEST, detail=ERROR_NO_INGREDIENTS_PROVIDED
+        )
 
     ingredient_str = ", ".join(ingredients)
     response = openai(
-        system_prompt_name="system_recipe_prompt",
-        user_prompt_name="user_recipe_prompt",
+        system_prompt_name=PROMPT_SYSTEM_RECIPE_PROMPT,
+        user_prompt_name=PROMPT_USER_RECIPE_PROMPT,
         variables={"ingredients": ingredient_str},
     )
 
     if response is None:
-        raise HTTPException(status_code=500, detail="Failed to generate recipe")
+        raise HTTPException(
+            status_code=HTTP_STATUS_INTERNAL_SERVER_ERROR,
+            detail=ERROR_FAILED_TO_GENERATE_RECIPE,
+        )
 
     try:
         name, parsed_ingredients, steps = openai_parser.get_recipe_items(response)
@@ -234,11 +259,16 @@ def generate_recipe(payload: IngredientsIn):
         )
     except RecipeParseError as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to parse AI response: {str(e)}"
+            status_code=HTTP_STATUS_INTERNAL_SERVER_ERROR,
+            detail=ERROR_FAILED_TO_PARSE_AI_RESPONSE.format(error=str(e)),
         )
     except (TypeError, AttributeError, ValueError) as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Invalid response format from AI: {str(e)}"
+            status_code=HTTP_STATUS_INTERNAL_SERVER_ERROR,
+            detail=ERROR_INVALID_AI_RESPONSE_FORMAT.format(error=str(e)),
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=HTTP_STATUS_INTERNAL_SERVER_ERROR,
+            detail=ERROR_INVALID_RECIPE_FORMAT,
         )

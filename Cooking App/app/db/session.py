@@ -9,7 +9,7 @@ from typing import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, scoped_session, sessionmaker
 
-DATABASE_URL = "sqlite:///./recipes.db"
+from app.config import DATABASE_URL
 
 engine = create_engine(
     DATABASE_URL,

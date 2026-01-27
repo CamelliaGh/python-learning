@@ -10,6 +10,13 @@ from fastapi.staticfiles import StaticFiles
 
 from app.db.session import Base, engine
 from app.routes.routes import router
+from app.config import (
+    STATIC_DIRECTORY,
+    API_PREFIX,
+    CORS_ALLOW_ORIGINS,
+    CORS_ALLOW_METHODS,
+    CORS_ALLOW_HEADERS,
+)
 
 
 def create_app() -> FastAPI:
@@ -24,16 +31,16 @@ def create_app() -> FastAPI:
     app_instance = FastAPI()
     Base.metadata.create_all(bind=engine)
 
-    app_instance.mount("/static", StaticFiles(directory="static"), name="static")
+    app_instance.mount("/static", StaticFiles(directory=STATIC_DIRECTORY), name="static")
 
     app_instance.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_origins=CORS_ALLOW_ORIGINS,
+        allow_methods=CORS_ALLOW_METHODS,
+        allow_headers=CORS_ALLOW_HEADERS,
     )
 
-    app_instance.include_router(router, prefix="/api")
+    app_instance.include_router(router, prefix=API_PREFIX)
     return app_instance
 
 

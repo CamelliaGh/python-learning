@@ -8,6 +8,8 @@ It is used primarily for generating prompts for AI services like OpenAI.
 import os
 import re
 
+from app.config import STATIC_DIRECTORY, PROMPTS_DIRECTORY, PROMPT_FILE_EXTENSION
+
 
 def load_template(template_name: str) -> str:
     """Load a template file from the 'static/prompts' directory.
@@ -26,8 +28,8 @@ def load_template(template_name: str) -> str:
         IOError: If there is an error reading the file.
     """
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    prompts_dir = os.path.join(base_dir, 'static', 'prompts')
-    file_path = os.path.join(prompts_dir, f"{template_name}.txt")
+    prompts_dir = os.path.join(base_dir, STATIC_DIRECTORY, PROMPTS_DIRECTORY)
+    file_path = os.path.join(prompts_dir, f"{template_name}{PROMPT_FILE_EXTENSION}")
 
     with open(file_path, 'r', encoding='utf-8') as f:
         return f.read()

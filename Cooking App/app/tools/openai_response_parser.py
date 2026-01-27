@@ -7,9 +7,12 @@ and cooking steps.
 
 from typing import List, Tuple
 
+from app.config import PARSER_MIN_PARTS_FOR_NAME, PARSER_STEP_PREFIX_CHECK_LENGTH
+
 
 class RecipeParseError(Exception):
     """Exception raised when recipe parsing fails due to invalid format."""
+
     pass
 
 
@@ -48,7 +51,7 @@ def get_recipe_items(response: str) -> Tuple[str | None, List[str], List[str]]:
     """
     if response is None:
         raise RecipeParseError("Response cannot be None")
-    
+
     if not isinstance(response, str):
         raise TypeError(f"Response must be a string, got {type(response).__name__}")
 
@@ -64,8 +67,10 @@ def get_recipe_items(response: str) -> Tuple[str | None, List[str], List[str]]:
             low = line.lower()
             if low.startswith("name:"):
                 parts = line.split(":", 1)
-                if len(parts) < 2:
-                    raise RecipeParseError("Invalid name format: missing value after 'Name:'")
+                if len(parts) < PARSER_MIN_PARTS_FOR_NAME:
+                    raise RecipeParseError(
+                        "Invalid name format: missing value after 'Name:'"
+                    )
                 name = parts[1].strip()
                 section = None
             elif low.startswith("ingredients:"):
@@ -76,7 +81,12 @@ def get_recipe_items(response: str) -> Tuple[str | None, List[str], List[str]]:
                 parsed_ingredients.append(line.strip()[1:].strip())
             elif section == "steps":
                 stripped = line.strip()
-                if stripped[:2].replace(".", "").replace(")", "").isdigit():
+                if (
+                    stripped[:PARSER_STEP_PREFIX_CHECK_LENGTH]
+                    .replace(".", "")
+                    .replace(")", "")
+                    .isdigit()
+                ):
                     steps.append(stripped)
 
         return name, parsed_ingredients, steps

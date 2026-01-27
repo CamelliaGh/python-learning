@@ -5,54 +5,59 @@ in the database, including pagination, filtering, and aggregation operations.
 """
 
 import math
-from typing import List
+from typing import List, Optional, Tuple
 
 from sqlalchemy import func
+from sqlalchemy.orm import Session
 
+from app.config import POPULAR_RECIPES_DEFAULT_LIMIT, RATING_DECIMAL_PLACES
 from app.db.models import Ingredient, Recipe, Review, recipe_ingredient
 
 
-def get_recipe(recipe_id, db):
+def get_recipe(recipe_id: int, db: Session) -> Optional[Recipe]:
     """Retrieve a recipe by its ID from the database.
-    
+
     Args:
         recipe_id: The unique identifier of the recipe to retrieve.
         db: The database session object.
-    
+
     Returns:
         Recipe object if found, None otherwise.
     """
     return db.get(Recipe, recipe_id)
 
 
-def avg_rating(recipe, db):
+def avg_rating(recipe: Recipe, db: Session) -> Optional[float]:
     """Calculate the average rating for a given recipe.
-    
+
     Args:
         recipe: The Recipe object to calculate the average rating for.
         db: The database session object.
-    
+
     Returns:
         float: The average rating rounded to 2 decimal places, or None if no ratings exist.
     """
     avg_rating_value = (
         db.query(func.avg(Review.rating)).filter(Review.recipe_id == recipe.id).scalar()
     )
-    average = round(float(avg_rating_value), 2) if avg_rating_value is not None else None
+    average = (
+        round(float(avg_rating_value), RATING_DECIMAL_PLACES)
+        if avg_rating_value is not None
+        else None
+    )
     return average
 
 
-
-
-
-def get_db_recipes(page, per_page, db):
+def get_db_recipes(
+    page: int, per_page: int, db: Session
+) -> Tuple[List[Recipe], int, int]:
     """Retrieve paginated recipes from the database.
-    
+
     Args:
         page: The page number (1-indexed) to retrieve.
         per_page: The number of recipes per page.
         db: The database session object.
-    
+
     Returns:
         tuple: A tuple containing:
             - items: List of Recipe objects for the requested page.
@@ -67,15 +72,16 @@ def get_db_recipes(page, per_page, db):
     return items, total, pages
 
 
-def get_ingredients_id(ingredient_names, db):
+def get_ingredients_id(ingredient_names: List[str], db: Session) -> List[int]:
     """Get ingredient IDs for a list of ingredient names (case-insensitive).
-    
+
     Args:
         ingredient_names: List of ingredient names to search for (should be lowercase).
         db: The database session object.
-    
+
     Returns:
-        List[int]: List of ingredient IDs that match the provided names, or empty list if none found.
+        List[int]: List of ingredient IDs that match the provided names, or empty list 
+        if none found.
     """
     ingredient_ids = (
         db.query(Ingredient.id)
@@ -89,13 +95,13 @@ def get_ingredients_id(ingredient_names, db):
     return ingredient_ids
 
 
-def get_recipe_by_ingredient(ingredient_names, db):
+def get_recipe_by_ingredient(ingredient_names: List[str], db: Session) -> List[Recipe]:
     """Find recipes that contain all of the specified ingredients.
-    
+
     Args:
         ingredient_names: List of ingredient names (case-insensitive) that the recipe must contain.
         db: The database session object.
-    
+
     Returns:
         List[Recipe]: List of Recipe objects that contain all the specified ingredients.
     """
@@ -122,12 +128,12 @@ def get_recipe_by_ingredient(ingredient_names, db):
     return recipes
 
 
-def get_random_recipe(db):
+def get_random_recipe(db: Session) -> Optional[Recipe]:
     """Retrieve a random recipe from the database.
-    
+
     Args:
         db: The database session object.
-    
+
     Returns:
         Recipe: A random Recipe object, or None if no recipes exist.
     """
@@ -135,13 +141,15 @@ def get_random_recipe(db):
     return recipe
 
 
-def get_popular_recipes(db, limit: int = 10):
+def get_popular_recipes(
+    db: Session, limit: int = POPULAR_RECIPES_DEFAULT_LIMIT
+) -> List[Tuple[Recipe, Optional[float]]]:
     """Retrieve the top N most popular recipes based on average rating.
-    
+
     Args:
         db: The database session object.
         limit: Maximum number of recipes to return (default: 10).
-    
+
     Returns:
         List[RecipeDetail]: List of the top 10 recipes with their average ratings,
             ordered by average rating in descending order.
@@ -165,7 +173,9 @@ def get_popular_recipes(db, limit: int = 10):
     return [
         (
             recipe,
-            round(float(avg_rating), 2) if avg_rating is not None else None,
+            round(float(avg_rating), RATING_DECIMAL_PLACES)
+            if avg_rating is not None
+            else None,
         )
         for recipe, avg_rating in rows
     ]

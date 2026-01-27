@@ -9,6 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import relationship
 
 from app.db.session import Base, engine
+from app.config import DB_RECIPE_NAME_MAX_LENGTH, DB_INGREDIENT_NAME_MAX_LENGTH
 
 recipe_ingredient = Table(
     "recipe_ingredient",
@@ -68,7 +69,7 @@ class Recipe(Base):
     __tablename__ = "recipe"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=True)
+    name = Column(String(DB_RECIPE_NAME_MAX_LENGTH), nullable=True)
     steps = Column(Text, nullable=True)
 
     ingredients = relationship(

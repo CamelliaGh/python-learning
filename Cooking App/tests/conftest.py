@@ -1,18 +1,18 @@
 """Pytest configuration and fixtures for testing."""
 
+# Use file-based SQLite database for testing (in-memory has connection isolation issues)
+import tempfile
+
 import pytest
-from unittest.mock import patch
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from app.db.models import Base
-from app.db.session import get_db, engine as production_engine
+from app.db.session import engine as production_engine
+from app.db.session import get_db
 
-# Use file-based SQLite database for testing (in-memory has connection isolation issues)
-import tempfile
-import os
-_test_db_file = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
+_test_db_file = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
 _test_db_file.close()
 TEST_DATABASE_URL = f"sqlite:///{_test_db_file.name}"
 
@@ -26,6 +26,7 @@ test_engine = create_engine(
 # create_app() from creating tables on production engine during import
 _original_create_all = Base.metadata.create_all
 
+
 def _patched_create_all(bind=None, **kwargs):
     """Patch create_all to use test engine when production engine is used."""
     # If bind is the production engine, redirect to test engine
@@ -33,6 +34,7 @@ def _patched_create_all(bind=None, **kwargs):
         return _original_create_all(bind=test_engine, **kwargs)
     # Otherwise use the original
     return _original_create_all(bind=bind, **kwargs)
+
 
 Base.metadata.create_all = _patched_create_all
 
@@ -77,7 +79,7 @@ def client(db_session):
             yield db_session
         finally:
             pass
-    
+
     app = create_app()
     app.dependency_overrides[get_db] = override_get_db
 
