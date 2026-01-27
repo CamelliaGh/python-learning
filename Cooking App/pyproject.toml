@@ -1,2 +1,18 @@
 [tool.ruff.lint]
 extend-select = ["I"]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[project]
+name = "cooking-app"
+version = "0.1.0"
+dependencies = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "httpx>=0.24.0",  # FastAPI TestClient uses httpx
+]

@@ -25,34 +25,6 @@ from app.services.openai_service import call_api as openai
 router = APIRouter()
 
 
-@router.get("/recipes/{recipe_id}", response_model=RecipeDetail)
-def get_recipe(recipe_id: int, db: Session = Depends(get_db)):
-    """Retrieve a specific recipe by ID with its average rating.
-
-    Args:
-        recipe_id: The unique identifier of the recipe to retrieve.
-        db: The database session (injected dependency).
-
-    Returns:
-        RecipeDetail: The recipe details including average rating.
-
-    Raises:
-        HTTPException: 404 if the recipe is not found.
-    """
-    recipe = db_helpers.get_db_recipe(recipe_id, db)
-    if not recipe:
-        raise HTTPException(status_code=404, detail="Recipe not found")
-
-    average = db_helpers.avg_rating(recipe, db)
-    return RecipeDetail(
-        id=recipe.id,
-        name=recipe.name,
-        ingredients=[i.name for i in recipe.ingredients],
-        steps=recipe.steps,
-        average_rating=average,
-    )
-
-
 @router.get("/recipes", response_model=PaginatedRecipes)
 def get_all_recipes_paginated(
     page: int = Query(1, ge=1),
@@ -178,6 +150,34 @@ def get_popular_recipes(db: Session = Depends(get_db)):
     return recipes
 
 
+@router.get("/recipes/{recipe_id}", response_model=RecipeDetail)
+def get_recipe(recipe_id: int, db: Session = Depends(get_db)):
+    """Retrieve a specific recipe by ID with its average rating.
+
+    Args:
+        recipe_id: The unique identifier of the recipe to retrieve.
+        db: The database session (injected dependency).
+
+    Returns:
+        RecipeDetail: The recipe details including average rating.
+
+    Raises:
+        HTTPException: 404 if the recipe is not found.
+    """
+    recipe = db_helpers.get_db_recipe(recipe_id, db)
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    average = db_helpers.avg_rating(recipe, db)
+    return RecipeDetail(
+        id=recipe.id,
+        name=recipe.name,
+        ingredients=[i.name for i in recipe.ingredients],
+        steps=recipe.steps,
+        average_rating=average,
+    )
+
+
 @router.post("/recipes/generate")
 def generate_recipe(payload: IngredientsIn):
     """Generate a new recipe using AI based on provided ingredients.
@@ -215,9 +215,8 @@ def generate_recipe(payload: IngredientsIn):
     if response is None:
         raise HTTPException(status_code=500, detail="Failed to generate recipe")
 
-    lines = response.strip().splitlines()
-    name, parsed_ingredients,steps =  openai_parser.get_recipe_items(lines)
     try:
+        name, parsed_ingredients, steps = openai_parser.get_recipe_items(response)
         return JSONResponse(
             {
                 "name": name,

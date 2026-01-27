@@ -169,14 +169,14 @@ def get_popular_recipes(db):
     )
     rows = (
         db.query(Recipe, subq.c.avg_rating)
-        .join(Recipe, subq, Recipe.id == subq.c.recipe_id)
+        .join(subq, Recipe.id == subq.c.recipe_id)
         .order_by(subq.c.avg_rating.desc())
         .limit(10)
         .all()
     )
     return [
         RecipeDetail(  # TODO:remove RecipeDetail from db_helper
-            **serialize_recipe(recipe).dict(),
+            **serialize_recipe(recipe).model_dump(),
             average_rating=round(float(avg_rating), 2)
             if avg_rating is not None
             else None,
