@@ -3,14 +3,15 @@
 # Use file-based SQLite database for testing (in-memory has connection isolation issues)
 import tempfile
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from app.db.models import Base
 from app.db.session import engine as production_engine
 from app.db.session import get_db
+from main import create_app
 
 _test_db_file = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
 _test_db_file.close()
@@ -40,7 +41,7 @@ Base.metadata.create_all = _patched_create_all
 
 # Now import main after patching - create_app() will be called at module level
 # but our patching will redirect it to use test_engine
-from main import create_app
+
 
 # Restore original create_all for use in fixtures (db_session will use it directly)
 Base.metadata.create_all = _original_create_all

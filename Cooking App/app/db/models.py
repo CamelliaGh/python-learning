@@ -8,8 +8,8 @@ from sqlalchemy import Column, ForeignKey, Integer, String, Table, Text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import relationship
 
+from app.config import DB_RECIPE_NAME_MAX_LENGTH
 from app.db.session import Base, engine
-from app.config import DB_RECIPE_NAME_MAX_LENGTH, DB_INGREDIENT_NAME_MAX_LENGTH
 
 recipe_ingredient = Table(
     "recipe_ingredient",
