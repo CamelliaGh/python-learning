@@ -1,0 +1,10 @@
+Create a recipe using the following ingredients:
+
+{{ingredients}}
+
+Please:
+- Come up with a creative and suitable recipe name
+- List all ingredients clearly
+- Provide clear, step-by-step cooking instructions
+
+Follow the exact output format defined in the system instructions.
