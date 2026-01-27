@@ -21,6 +21,7 @@ from app.routes.schemas import (
     StepsOut,
 )
 from app.services.openai_service import call_api as openai
+from app.tools.serializers import serialize_recipe
 
 router = APIRouter()
 
@@ -109,7 +110,7 @@ def get_recipes_by_ingredients(payload: IngredientsIn, db: Session = Depends(get
         raise HTTPException(status_code=400, detail="Empty ingredients list")
 
     recipes = db_helpers.get_recipe_by_ingredient(ingredient_names, db)
-    return recipes
+    return [serialize_recipe(recipe) for recipe in recipes]
 
 
 @router.get("/recipes/random", response_model=RecipeOut)
@@ -128,7 +129,7 @@ def get_random_recipe(db: Session = Depends(get_db)):
     recipe = db_helpers.get_random_recipe(db)
     if not recipe:
         raise HTTPException(status_code=404, detail="No recipes found")
-    return recipe
+    return serialize_recipe(recipe)
 
 
 @router.get("/recipes/popular", response_model=List[RecipeDetail])
@@ -144,10 +145,17 @@ def get_popular_recipes(db: Session = Depends(get_db)):
     Raises:
         HTTPException: 404 if no recipes with ratings exist.
     """
-    recipes = db_helpers.get_popular_recipes(db)
-    if not recipes:
+    recipe_ratings = db_helpers.get_popular_recipes(db)
+    if not recipe_ratings:
         raise HTTPException(status_code=404, detail="No recipes found")
-    return recipes
+    
+    return [
+        RecipeDetail(
+            **serialize_recipe(recipe).model_dump(),
+            average_rating=avg_rating,
+        )
+        for recipe, avg_rating in recipe_ratings
+    ]
 
 
 @router.get("/recipes/{recipe_id}", response_model=RecipeDetail)

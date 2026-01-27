@@ -97,7 +97,7 @@ def get_recipe_by_ingredient(ingredient_names, db):
         db: The database session object.
     
     Returns:
-        List[RecipeOut]: List of serialized recipes that contain all the specified ingredients.
+        List[Recipe]: List of Recipe objects that contain all the specified ingredients.
     """
     subq = (
         db.query(
@@ -119,7 +119,7 @@ def get_recipe_by_ingredient(ingredient_names, db):
         .all()
     )
 
-    return [serialize_recipe(r) for r in recipes]
+    return recipes
 
 
 def get_random_recipe(db):
@@ -129,23 +129,23 @@ def get_random_recipe(db):
         db: The database session object.
     
     Returns:
-        RecipeOut: A serialized random recipe, or None if no recipes exist.
+        Recipe: A random Recipe object, or None if no recipes exist.
     """
     recipe = db.query(Recipe).order_by(func.random()).first()  # pylint: disable=not-callable
-    if recipe:
-        return serialize_recipe(recipe)
-    return None
+    return recipe
 
 
-def get_popular_recipes(db):
-    """Retrieve the top 10 most popular recipes based on average rating.
+def get_popular_recipes(db, limit: int = 10):
+    """Retrieve the top N most popular recipes based on average rating.
     
     Args:
         db: The database session object.
+        limit: Maximum number of recipes to return (default: 10).
     
     Returns:
-        List[RecipeDetail]: List of the top 10 recipes with their average ratings,
+        List[tuple]: List of tuples containing (Recipe, avg_rating) pairs,
             ordered by average rating in descending order.
+            avg_rating is a float rounded to 2 decimal places, or None if no ratings exist.
     """
     subq = (
         db.query(
@@ -159,15 +159,13 @@ def get_popular_recipes(db):
         db.query(Recipe, subq.c.avg_rating)
         .join(subq, Recipe.id == subq.c.recipe_id)
         .order_by(subq.c.avg_rating.desc())
-        .limit(10)
+        .limit(limit)
         .all()
     )
     return [
-        RecipeDetail(  # TODO:remove RecipeDetail from db_helper
-            **serialize_recipe(recipe).model_dump(),
-            average_rating=round(float(avg_rating), 2)
-            if avg_rating is not None
-            else None,
+        (
+            recipe,
+            round(float(avg_rating), 2) if avg_rating is not None else None,
         )
         for recipe, avg_rating in rows
     ]
