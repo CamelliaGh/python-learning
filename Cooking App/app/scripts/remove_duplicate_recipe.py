@@ -8,6 +8,7 @@ import os
 import sys
 from collections import defaultdict
 
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
 from sqlalchemy.orm import Session
 
 from app.db.models import Recipe
@@ -55,7 +56,10 @@ def find_duplicate_recipes(confirm: bool = True) -> None:
         None
         
     Raises:
-        Exception: Re-raises any database or processing errors after rollback
+        SQLAlchemyError: If a database error occurs during the operation.
+        IntegrityError: If a database constraint violation occurs.
+        OperationalError: If a database connection or operational error occurs.
+        ValueError: If invalid data is encountered during processing.
         
     Note:
         - Normalization is case-insensitive and strips whitespace
@@ -68,6 +72,8 @@ def find_duplicate_recipes(confirm: bool = True) -> None:
 
         name_map: dict[str, list[Recipe]] = defaultdict(list)
         for recipe in all_recipes:
+            if not recipe.name:
+                continue
             key = normalize_name(recipe.name)
             name_map[key].append(recipe)
 
@@ -102,9 +108,21 @@ def find_duplicate_recipes(confirm: bool = True) -> None:
                 session.delete(r)
         session.commit()
         print("✅ Duplicates removed.")
-    except Exception as e:
+    except IntegrityError as e:
         session.rollback()
-        print("❌ Error:", e)
+        print(f"❌ Database constraint error: {e}")
+        raise
+    except OperationalError as e:
+        session.rollback()
+        print(f"❌ Database connection error: {e}")
+        raise
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"❌ Database error: {e}")
+        raise
+    except (AttributeError, TypeError, ValueError) as e:
+        session.rollback()
+        print(f"❌ Data processing error: {e}")
         raise
     finally:
         session.close()

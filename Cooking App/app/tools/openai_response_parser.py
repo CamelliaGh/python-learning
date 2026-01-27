@@ -8,6 +8,11 @@ and cooking steps.
 from typing import List, Tuple
 
 
+class RecipeParseError(Exception):
+    """Exception raised when recipe parsing fails due to invalid format."""
+    pass
+
+
 def get_recipe_items(response: str) -> Tuple[str | None, List[str], List[str]]:
     """Parse recipe information from an OpenAI API response string.
 
@@ -27,6 +32,11 @@ def get_recipe_items(response: str) -> Tuple[str | None, List[str], List[str]]:
               bullet points under the Ingredients section
             - steps: List of step strings extracted from the Steps section
 
+    Raises:
+        RecipeParseError: If the response format is invalid or cannot be parsed.
+        TypeError: If response is not a string.
+        AttributeError: If response is None or missing required attributes.
+
     Example:
         >>> response = "Name: Chocolate Cake\\nIngredients:\\n- flour\\n- sugar\\n
                         Steps:\\n1. Mix ingredients"
@@ -36,27 +46,39 @@ def get_recipe_items(response: str) -> Tuple[str | None, List[str], List[str]]:
         >>> ingredients
         ['flour', 'sugar']
     """
-    name = None
-    parsed_ingredients: List[str] = []
-    steps: List[str] = []
+    if response is None:
+        raise RecipeParseError("Response cannot be None")
+    
+    if not isinstance(response, str):
+        raise TypeError(f"Response must be a string, got {type(response).__name__}")
 
-    lines = response.strip().splitlines()
-    section = None
+    try:
+        name = None
+        parsed_ingredients: List[str] = []
+        steps: List[str] = []
 
-    for line in lines:
-        low = line.lower()
-        if low.startswith("name:"):
-            name = line.split(":", 1)[1].strip()
-            section = None
-        elif low.startswith("ingredients:"):
-            section = "ingredients"
-        elif low.startswith("steps:"):
-            section = "steps"
-        elif section == "ingredients" and line.strip().startswith("-"):
-            parsed_ingredients.append(line.strip()[1:].strip())
-        elif section == "steps":
-            stripped = line.strip()
-            if stripped[:2].replace(".", "").replace(")", "").isdigit():
-                steps.append(stripped)
+        lines = response.strip().splitlines()
+        section = None
 
-    return name, parsed_ingredients, steps
+        for line in lines:
+            low = line.lower()
+            if low.startswith("name:"):
+                parts = line.split(":", 1)
+                if len(parts) < 2:
+                    raise RecipeParseError("Invalid name format: missing value after 'Name:'")
+                name = parts[1].strip()
+                section = None
+            elif low.startswith("ingredients:"):
+                section = "ingredients"
+            elif low.startswith("steps:"):
+                section = "steps"
+            elif section == "ingredients" and line.strip().startswith("-"):
+                parsed_ingredients.append(line.strip()[1:].strip())
+            elif section == "steps":
+                stripped = line.strip()
+                if stripped[:2].replace(".", "").replace(")", "").isdigit():
+                    steps.append(stripped)
+
+        return name, parsed_ingredients, steps
+    except (AttributeError, IndexError, ValueError) as e:
+        raise RecipeParseError(f"Failed to parse recipe response: {e}") from e

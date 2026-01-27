@@ -21,7 +21,8 @@ from app.routes.schemas import (
     StepsOut,
 )
 from app.services.openai_service import call_api as openai
-from app.tools.serializers import serialize_recipe
+from app.tools.openai_response_parser import RecipeParseError
+from app.tools.serializers import parse_steps, serialize_recipe
 
 router = APIRouter()
 
@@ -80,9 +81,8 @@ def get_recipe_steps_array(recipe_id: int, db: Session = Depends(get_db)):
     recipe = db_helpers.get_recipe(recipe_id, db)
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
-    steps_list = []
-    if recipe.steps:
-        steps_list = [s.strip() for s in recipe.steps.split("\n") if s.strip()]
+    
+    steps_list = parse_steps(recipe.steps)
     return StepsOut(recipe_id=recipe.id, name=recipe.name, steps=steps_list)
 
 
@@ -232,5 +232,13 @@ def generate_recipe(payload: IngredientsIn):
                 "steps": steps,
             }
         )
-    except Exception:
-        raise HTTPException(status_code=500, detail="Invalid recipe format from AI")
+    except RecipeParseError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to parse AI response: {str(e)}"
+        )
+    except (TypeError, AttributeError, ValueError) as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Invalid response format from AI: {str(e)}"
+        )

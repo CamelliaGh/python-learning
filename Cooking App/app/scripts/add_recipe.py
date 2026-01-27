@@ -8,6 +8,8 @@ detection and ingredient normalization.
 import os
 import sys
 
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
+
 from app.db.models import Ingredient, Recipe
 from app.db.session import SessionLocal
 
@@ -104,7 +106,9 @@ def save_recipe(name, steps, ingredients_input):
         ingredients_input: A list of ingredient names to associate with the recipe.
     
     Raises:
-        Exception: If an error occurs during database operations.
+        SQLAlchemyError: If a database error occurs during the operation.
+        IntegrityError: If a database constraint violation occurs.
+        OperationalError: If a database connection or operational error occurs.
     """
     session = SessionLocal()
     try:
@@ -135,9 +139,21 @@ def save_recipe(name, steps, ingredients_input):
         print(
             f"✅ Recipe '{name}' added successfully with {len(recipe.ingredients)} ingredients (id={recipe.id})."
         )
-    except Exception as e:
+    except IntegrityError as e:
         session.rollback()
-        print("❌ Error:", e)
+        print(f"❌ Database constraint error: {e}")
+        raise
+    except OperationalError as e:
+        session.rollback()
+        print(f"❌ Database connection error: {e}")
+        raise
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"❌ Database error: {e}")
+        raise
+    except (AttributeError, TypeError, ValueError) as e:
+        session.rollback()
+        print(f"❌ Data validation error: {e}")
         raise
     finally:
         session.close()
