@@ -143,7 +143,7 @@ def get_popular_recipes(db, limit: int = 10):
         limit: Maximum number of recipes to return (default: 10).
     
     Returns:
-        List[tuple]: List of tuples containing (Recipe, avg_rating) pairs,
+        List[RecipeDetail]: List of the top 10 recipes with their average ratings,
             ordered by average rating in descending order.
             avg_rating is a float rounded to 2 decimal places, or None if no ratings exist.
     """
