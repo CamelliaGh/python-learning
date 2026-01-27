@@ -164,7 +164,7 @@ def get_recipe(recipe_id: int, db: Session = Depends(get_db)):
     Raises:
         HTTPException: 404 if the recipe is not found.
     """
-    recipe = db_helpers.get_db_recipe(recipe_id, db)
+    recipe = db_helpers.get_recipe(recipe_id, db)
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
 

@@ -10,8 +10,6 @@ from typing import List
 from sqlalchemy import func
 
 from app.db.models import Ingredient, Recipe, Review, recipe_ingredient
-from app.routes.schemas import RecipeDetail
-from app.tools.serializers import serialize_recipe
 
 
 def get_recipe(recipe_id, db):
@@ -44,17 +42,7 @@ def avg_rating(recipe, db):
     return average
 
 
-def get_db_recipe(recipe_id, db):
-    """Retrieve a recipe by its ID from the database.
-    
-    Args:
-        recipe_id: The unique identifier of the recipe to retrieve.
-        db: The database session object.
-    
-    Returns:
-        Recipe object if found, None otherwise.
-    """
-    return db.get(Recipe, recipe_id)
+
 
 
 def get_db_recipes(page, per_page, db):
