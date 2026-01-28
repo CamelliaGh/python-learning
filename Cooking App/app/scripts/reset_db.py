@@ -12,15 +12,20 @@ import sys
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.db.models import Ingredient, Recipe, Review, recipe_ingredient
-from app.db.session import SessionLocal
+# Setup: Ensure project root is in Python path when running from scripts directory
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_ROOT = os.path.abspath(os.path.join(_SCRIPT_DIR, "..", ".."))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
 
-# Adjust sys.path so "app" is importable when run directly
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, "..", ".."))
-if PROJECT_ROOT not in sys.path:
-    os.chdir(PROJECT_ROOT)
-    sys.path.insert(0, PROJECT_ROOT)
+# Clear any cached app modules to ensure fresh imports from local source
+for key in list(sys.modules.keys()):
+    if key.startswith("app.") or key == "app":
+        del sys.modules[key]
+
+# Now import normally - Python will use local source since PROJECT_ROOT is first in path
+from app.db.models import Ingredient, Recipe, Review, recipe_ingredient  # noqa: E402
+from app.db.session import SessionLocal  # noqa: E402
 
 
 def reset_database() -> None:

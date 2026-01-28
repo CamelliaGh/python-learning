@@ -3,6 +3,7 @@
 This module defines API endpoints for retrieving ingredient information
 from the database.
 """
+
 from typing import List
 
 from fastapi import APIRouter, Depends
@@ -13,6 +14,7 @@ from app.db.db_helpers import get_all_ingredients as db_helpers_get_all_ingredie
 from app.db.session import get_db
 
 router = APIRouter()
+
 
 @router.get("/api/ingredients", response_model=List[str])
 def get_all_ingredients(db: Session = Depends(get_db)):

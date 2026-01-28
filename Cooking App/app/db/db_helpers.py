@@ -72,6 +72,18 @@ def get_db_recipes(
     return items, total, pages
 
 
+def get_all_recipes(db: Session) -> List[Recipe]:
+    """Retrieve all recipes from the database.
+
+    Args:
+        db: The database session object.
+
+    Returns:
+        List[Recipe]: A list of all Recipe objects in the database.
+    """
+    return db.query(Recipe).all()
+
+
 def get_ingredients_id(ingredient_names: List[str], db: Session) -> List[int]:
     """Get ingredient IDs for a list of ingredient names (case-insensitive).
 
@@ -281,7 +293,7 @@ def store_review_in_db(review_data: dict, db: Session) -> None:
         review_data: Dictionary containing:
         db: The database session object.
     """
-    recipe =  get_recipe(review_data.get("recipe_id"), db)
+    recipe = get_recipe(review_data.get("recipe_id"), db)
     if not recipe:
         raise ValueError("Recipe not found")
     review = Review(recipe=recipe, rating=review_data.get("rating"))

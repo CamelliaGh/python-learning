@@ -2,6 +2,7 @@
 
 This module defines API endpoints for submitting reviews for recipes.
 """
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -31,5 +32,3 @@ def submit_review(payload: ReviewIn, db: Session = Depends(get_db)):
         return {"message": "Review submitted successfully", "review": review}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-    
