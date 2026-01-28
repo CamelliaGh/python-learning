@@ -1,4 +1,5 @@
 """Text-to-speech API routes for converting text to audio."""
+
 from io import BytesIO
 
 from fastapi import APIRouter, HTTPException, Query
@@ -31,5 +32,3 @@ def tts(text: str = Query("")):
         return StreamingResponse(audio, media_type="audio/mpeg")
 
     raise HTTPException(status_code=500, detail="Unsupported audio object from TTS")
-
-

@@ -23,16 +23,16 @@ if PROJECT_ROOT not in sys.path:
 
 def normalize_name(name: str) -> str:
     """Normalize recipe names for duplicate detection.
-    
+
     Converts recipe names to a standardized format by stripping whitespace
     and converting to lowercase for case-insensitive comparison.
-    
+
     Args:
         name (str): The original recipe name to normalize
-        
+
     Returns:
         str: The normalized name (stripped and lowercase)
-        
+
     Example:
         >>> normalize_name("  Chocolate Cake  ")
         "chocolate cake"
@@ -43,24 +43,24 @@ def normalize_name(name: str) -> str:
 
 def find_duplicate_recipes(confirm: bool = True) -> None:
     """Find and remove duplicate recipes from the database.
-    
+
     Scans all recipes in the database, identifies duplicates based on normalized
     name matching, and optionally removes them. When duplicates are found,
     the first occurrence is kept and subsequent duplicates are deleted.
-    
+
     Args:
         confirm (bool): Whether to prompt for user confirmation before deletion.
                        Defaults to True for safety.
-    
+
     Returns:
         None
-        
+
     Raises:
         SQLAlchemyError: If a database error occurs during the operation.
         IntegrityError: If a database constraint violation occurs.
         OperationalError: If a database connection or operational error occurs.
         ValueError: If invalid data is encountered during processing.
-        
+
     Note:
         - Normalization is case-insensitive and strips whitespace
         - Database changes are rolled back if any error occurs

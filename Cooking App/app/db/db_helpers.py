@@ -4,7 +4,6 @@ This module provides utility functions for querying and manipulating recipe data
 in the database, including pagination, filtering, and aggregation operations.
 """
 
-
 import math
 from typing import List, Optional, Tuple
 
@@ -189,11 +188,11 @@ def _normalize(s):
 
 def store_recipe_in_db(recipe_data: dict, db: Session) -> None:
     """Store a recipe in the database.
-    
+
     Creates a new recipe with associated ingredients. Handles duplicate detection
     and ingredient normalization. The function does NOT close the session - the
     caller is responsible for session management.
-    
+
     Args:
         recipe_data: Dictionary containing:
             - name (str): Recipe name
@@ -201,7 +200,7 @@ def store_recipe_in_db(recipe_data: dict, db: Session) -> None:
                                         or list of step strings
             - ingredients (List[str]): List of ingredient names
         db: The database session object (will not be closed by this function).
-    
+
     Raises:
         Exception: Re-raises any database errors after rollback.
     """
@@ -232,7 +231,7 @@ def store_recipe_in_db(recipe_data: dict, db: Session) -> None:
             steps_str = "\n".join(steps_list)
         else:
             steps_str = ""
-        
+
         recipe = Recipe(name=name, steps=steps_str)
         db.add(recipe)
 
@@ -260,3 +259,16 @@ def store_recipe_in_db(recipe_data: dict, db: Session) -> None:
         db.rollback()
         print("❌ Error:", e)
         raise
+
+
+def get_all_ingredients(db: Session) -> List[str]:
+    """Get all distinct ingredient names from the database.
+
+    Args:
+        db: The database session object.
+
+    Returns:
+        List[str]: List of distinct ingredient names.
+    """
+    rows = db.query(Ingredient.name).distinct().all()
+    return [name for (name,) in rows]

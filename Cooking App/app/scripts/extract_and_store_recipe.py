@@ -1,3 +1,10 @@
+"""Script to extract recipe data from HTML and store it in the database.
+
+This script processes HTML content containing recipe information, uses OpenAI
+to extract structured recipe data (name, ingredients, steps), and stores
+the result in the database. It handles module path setup to ensure local
+app modules are used instead of any installed packages.
+"""
 import importlib.util
 import os
 import sys
@@ -30,13 +37,13 @@ os.chdir(PROJECT_ROOT)
 
 # Force Python to use local source instead of installed package
 # Remove any cached app modules to ensure fresh import from local source
-modules_to_remove = [key for key in list(sys.modules.keys()) if key.startswith('app.')]
+modules_to_remove = [key for key in list(sys.modules.keys()) if key.startswith("app.")]
 for module in modules_to_remove:
     del sys.modules[module]
 
 # Also remove the base 'app' module if it exists
-if 'app' in sys.modules:
-    del sys.modules['app']
+if "app" in sys.modules:
+    del sys.modules["app"]
 
 # Now import from local source
 from app.db.session import SessionLocal  # noqa: E402
@@ -48,8 +55,9 @@ try:
     # Verify we got the local version, not site-packages
     import app.db.db_helpers as _check_module
     from app.db.db_helpers import store_recipe_in_db
+
     _imported_path = os.path.abspath(_check_module.__file__)
-    if 'site-packages' in _imported_path:
+    if "site-packages" in _imported_path:
         # Got wrong version - force load from local file
         raise ImportError("Imported from site-packages instead of local project")
 except (ImportError, AttributeError) as e:
@@ -59,33 +67,34 @@ except (ImportError, AttributeError) as e:
             f"Cannot find db_helpers.py at {LOCAL_DB_HELPERS}\n"
             f"Project root: {PROJECT_ROOT}"
         ) from e
-    
+
     # Load explicitly from local file path
-    spec = importlib.util.spec_from_file_location('app.db.db_helpers', LOCAL_DB_HELPERS)
+    spec = importlib.util.spec_from_file_location("app.db.db_helpers", LOCAL_DB_HELPERS)
     if not spec or not spec.loader:
         raise ImportError(f"Cannot create spec for {LOCAL_DB_HELPERS}") from e
-    
+
     # Ensure parent package structure exists
     import types
-    if 'app' not in sys.modules:
-        sys.modules['app'] = types.ModuleType('app')
-        sys.modules['app'].__path__ = [LOCAL_APP_DIR]
-    if 'app.db' not in sys.modules:
-        sys.modules['app.db'] = types.ModuleType('app.db')
-        sys.modules['app.db'].__path__ = [os.path.join(LOCAL_APP_DIR, 'db')]
-    
+
+    if "app" not in sys.modules:
+        sys.modules["app"] = types.ModuleType("app")
+        sys.modules["app"].__path__ = [LOCAL_APP_DIR]
+    if "app.db" not in sys.modules:
+        sys.modules["app.db"] = types.ModuleType("app.db")
+        sys.modules["app.db"].__path__ = [os.path.join(LOCAL_APP_DIR, "db")]
+
     # Load the module
     _db_helpers_module = importlib.util.module_from_spec(spec)
-    sys.modules['app.db.db_helpers'] = _db_helpers_module
+    sys.modules["app.db.db_helpers"] = _db_helpers_module
     spec.loader.exec_module(_db_helpers_module)
-    
+
     # Extract the function we need
-    if not hasattr(_db_helpers_module, 'store_recipe_in_db'):
+    if not hasattr(_db_helpers_module, "store_recipe_in_db"):
         raise ImportError(
             f"store_recipe_in_db not found in {LOCAL_DB_HELPERS}\n"
             f"Available: {dir(_db_helpers_module)}"
         ) from e
-    
+
     store_recipe_in_db = _db_helpers_module.store_recipe_in_db
 
 

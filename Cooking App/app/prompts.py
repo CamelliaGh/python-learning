@@ -27,11 +27,11 @@ def load_template(template_name: str) -> str:
         FileNotFoundError: If the template file does not exist.
         IOError: If there is an error reading the file.
     """
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     prompts_dir = os.path.join(base_dir, STATIC_DIRECTORY, PROMPTS_DIRECTORY)
     file_path = os.path.join(prompts_dir, f"{template_name}{PROMPT_FILE_EXTENSION}")
 
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
 
 
@@ -104,7 +104,7 @@ def render_prompt_from_file(template_name: str, variables: dict) -> str:
 if __name__ == "__main__":
     ingredients = {
         "ingredients": "Chicken, onion, tomatoes, garlic cloves, greek yogurt, rice, bread",
-        "meal_type": "dinner"
+        "meal_type": "dinner",
     }
     rendered_prompt = render_prompt_from_file("recipe_prompt", ingredients)
     print("Rendered prompt:")

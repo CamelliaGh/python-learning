@@ -13,20 +13,23 @@ from app.config import DATABASE_URL
 
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {},
+    connect_args={"check_same_thread": False}
+    if DATABASE_URL.startswith("sqlite")
+    else {},
 )
 
-SessionLocal = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
+SessionLocal = scoped_session(
+    sessionmaker(autocommit=False, autoflush=False, bind=engine)
+)
 Base = declarative_base()
-
 
 
 def get_db() -> Generator:
     """Create and manage a database session for dependency injection.
-    
+
     This function is used as a FastAPI dependency to provide database sessions
     to route handlers. It ensures the session is properly closed after use.
-    
+
     Yields:
         Session: A SQLAlchemy database session object.
     """

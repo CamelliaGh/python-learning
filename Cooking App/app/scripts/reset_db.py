@@ -25,23 +25,23 @@ if PROJECT_ROOT not in sys.path:
 
 def reset_database() -> None:
     """Reset the database by deleting all recipes, ingredients, and reviews.
-    
+
     Completely clears the database by removing all data from recipes, ingredients,
     reviews, and their associations. Prompts for user confirmation before proceeding
     and handles foreign key constraints by deleting in the correct order.
-    
+
     Returns:
         None
-        
+
     Raises:
         SQLAlchemyError: If database operations fail, changes are rolled back
-        
+
     Note:
         - Requires user confirmation (type 'y') before deletion
         - Deletes association table entries first to avoid constraint violations
         - All changes are committed as a single transaction
         - Database session is properly closed regardless of success/failure
-        
+
     Warning:
         This operation is irreversible and will permanently delete all data!
     """

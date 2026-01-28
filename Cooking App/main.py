@@ -31,7 +31,9 @@ def create_app() -> FastAPI:
     app_instance = FastAPI()
     Base.metadata.create_all(bind=engine)
 
-    app_instance.mount("/static", StaticFiles(directory=STATIC_DIRECTORY), name="static")
+    app_instance.mount(
+        "/static", StaticFiles(directory=STATIC_DIRECTORY), name="static"
+    )
 
     app_instance.add_middleware(
         CORSMiddleware,
