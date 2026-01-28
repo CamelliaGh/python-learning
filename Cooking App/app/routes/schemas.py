@@ -6,7 +6,7 @@ response serialization, including recipe details, pagination, and ingredient fil
 
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class RecipeOut(BaseModel):
@@ -38,3 +38,13 @@ class StepsOut(BaseModel):
 
 class IngredientsIn(BaseModel):
     ingredients: List[str]
+
+class ReviewIn(BaseModel):
+    recipe_id: int
+    rating: int
+
+    @field_validator("rating")
+    def rating_range(self, v):
+        if not 1 <= v <= 5:
+            raise ValueError("rating must be between 1 and 5")
+        return v

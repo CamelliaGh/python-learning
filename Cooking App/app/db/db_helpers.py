@@ -272,3 +272,19 @@ def get_all_ingredients(db: Session) -> List[str]:
     """
     rows = db.query(Ingredient.name).distinct().all()
     return [name for (name,) in rows]
+
+
+def store_review_in_db(review_data: dict, db: Session) -> None:
+    """Store a review in the database.
+
+    Args:
+        review_data: Dictionary containing:
+        db: The database session object.
+    """
+    recipe =  get_recipe(review_data.get("recipe_id"), db)
+    if not recipe:
+        raise ValueError("Recipe not found")
+    review = Review(recipe=recipe, rating=review_data.get("rating"))
+    db.add(review)
+    db.commit()
+    return review
