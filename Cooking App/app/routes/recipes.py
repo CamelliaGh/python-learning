@@ -267,7 +267,7 @@ def generate_recipe(payload: IngredientsIn):
             status_code=HTTP_STATUS_INTERNAL_SERVER_ERROR,
             detail=ERROR_INVALID_AI_RESPONSE_FORMAT.format(error=str(e)),
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=HTTP_STATUS_INTERNAL_SERVER_ERROR,
             detail=ERROR_INVALID_RECIPE_FORMAT,

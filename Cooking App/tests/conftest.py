@@ -3,8 +3,8 @@
 # Use file-based SQLite database for testing (in-memory has connection isolation issues)
 import tempfile
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 

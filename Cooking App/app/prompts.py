@@ -8,7 +8,7 @@ It is used primarily for generating prompts for AI services like OpenAI.
 import os
 import re
 
-from app.config import STATIC_DIRECTORY, PROMPTS_DIRECTORY, PROMPT_FILE_EXTENSION
+from app.config import PROMPT_FILE_EXTENSION, PROMPTS_DIRECTORY, STATIC_DIRECTORY
 
 
 def load_template(template_name: str) -> str:

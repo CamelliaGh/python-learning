@@ -8,7 +8,7 @@ import os
 import sys
 from collections import defaultdict
 
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
+from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.db.models import Recipe

@@ -4,6 +4,7 @@ This module provides utility functions for querying and manipulating recipe data
 in the database, including pagination, filtering, and aggregation operations.
 """
 
+
 import math
 from typing import List, Optional, Tuple
 
@@ -80,7 +81,8 @@ def get_ingredients_id(ingredient_names: List[str], db: Session) -> List[int]:
         db: The database session object.
 
     Returns:
-        List[int]: List of ingredient IDs that match the provided names, or empty list 
+        List[int]: List of ingredient IDs that match the provided names, or empty list
+
         if none found.
     """
     ingredient_ids = (
@@ -179,3 +181,82 @@ def get_popular_recipes(
         )
         for recipe, avg_rating in rows
     ]
+
+
+def _normalize(s):
+    return (s or "").strip().lower()
+
+
+def store_recipe_in_db(recipe_data: dict, db: Session) -> None:
+    """Store a recipe in the database.
+    
+    Creates a new recipe with associated ingredients. Handles duplicate detection
+    and ingredient normalization. The function does NOT close the session - the
+    caller is responsible for session management.
+    
+    Args:
+        recipe_data: Dictionary containing:
+            - name (str): Recipe name
+            - steps (str or List[str]): Recipe steps as string (newline-separated)
+                                        or list of step strings
+            - ingredients (List[str]): List of ingredient names
+        db: The database session object (will not be closed by this function).
+    
+    Raises:
+        Exception: Re-raises any database errors after rollback.
+    """
+    if not recipe_data or recipe_data == {}:
+        print("❌ Error generating recipe")
+        return
+
+    try:
+        name = (recipe_data.get("name") or "").strip()
+        if not name:
+            print("❌ Extracted recipe has no name.")
+            return
+
+        # Avoid duplicate insert (case-insensitive)
+        existing = db.query(Recipe).filter(Recipe.name.ilike(name)).first()
+        if existing:
+            print(f"⚠️ Recipe '{name}' already exists (id={existing.id}).")
+            return
+
+        # Handle steps - can be string or list
+        steps_input = recipe_data.get("steps")
+        if isinstance(steps_input, str):
+            # If string, use as-is (already newline-separated)
+            steps_str = steps_input
+        elif isinstance(steps_input, list):
+            # If list, join with newlines
+            steps_list = [s.strip() for s in steps_input if s.strip()]
+            steps_str = "\n".join(steps_list)
+        else:
+            steps_str = ""
+        
+        recipe = Recipe(name=name, steps=steps_str)
+        db.add(recipe)
+
+        # Handle ingredients (deduplicate by ingredient id to avoid UNIQUE violation)
+        seen_ingredient_ids: set[int] = set()
+        for ing in recipe_data.get("ingredients", []):
+            ing_name = _normalize(ing)
+            if not ing_name:
+                continue
+            ingredient = (
+                db.query(Ingredient).filter(Ingredient.name == ing_name).first()
+            )
+            if not ingredient:
+                ingredient = Ingredient(name=ing_name)
+                db.add(ingredient)
+                db.flush()  # get id for association immediately
+            if ingredient.id in seen_ingredient_ids:
+                continue
+            seen_ingredient_ids.add(ingredient.id)
+            recipe.ingredients.append(ingredient)
+
+        db.commit()
+        print(f"✅ Recipe '{recipe.name}' stored in database (id={recipe.id}).")
+    except Exception as e:
+        db.rollback()
+        print("❌ Error:", e)
+        raise

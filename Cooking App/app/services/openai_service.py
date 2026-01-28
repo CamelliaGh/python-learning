@@ -11,8 +11,8 @@ import os
 
 from openai import APIError, OpenAI
 
-from app.prompts import render_prompt_from_file
 from app.config import OPENAI_DEFAULT_MODEL, OPENAI_DEFAULT_TEMPERATURE
+from app.prompts import render_prompt_from_file
 
 # Load OpenAI credentials from environment (loaded by config.py)
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")

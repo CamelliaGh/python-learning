@@ -8,15 +8,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from app.config import (
+    API_PREFIX,
+    CORS_ALLOW_HEADERS,
+    CORS_ALLOW_METHODS,
+    CORS_ALLOW_ORIGINS,
+    STATIC_DIRECTORY,
+)
 from app.db.session import Base, engine
 from app.routes.routes import router
-from app.config import (
-    STATIC_DIRECTORY,
-    API_PREFIX,
-    CORS_ALLOW_ORIGINS,
-    CORS_ALLOW_METHODS,
-    CORS_ALLOW_HEADERS,
-)
 
 
 def create_app() -> FastAPI:
