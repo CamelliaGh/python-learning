@@ -22,7 +22,7 @@ for key in list(sys.modules.keys()):
 
 # Now import normally - Python will use local source since PROJECT_ROOT is first in path
 from app.db.db_helpers import store_recipe_in_db  # noqa: E402
-from app.db.session import SessionLocal  # noqa: E402
+from app.db.session import get_db_session  # noqa: E402
 from app.services.openai_service import call_api  # noqa: E402
 from app.tools.openai_response_parser import get_recipe_items  # noqa: E402
 
@@ -46,10 +46,7 @@ if __name__ == "__main__":
         html_content = file.read()
     response = extract_and_store_recipe(html_content)
     name, ingredients, steps = get_recipe_items(response)
-    session = SessionLocal()
-    try:
+    with get_db_session() as session:
         store_recipe_in_db(
             {"name": name, "ingredients": ingredients, "steps": steps}, session
         )
-    finally:
-        session.close()

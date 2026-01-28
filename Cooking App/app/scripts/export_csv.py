@@ -22,7 +22,7 @@ for key in list(sys.modules.keys()):
 
 # Now import normally - Python will use local source since PROJECT_ROOT is first in path
 from app.db.db_helpers import get_all_recipes  # noqa: E402
-from app.db.session import SessionLocal  # noqa: E402
+from app.db.session import get_db_session  # noqa: E402
 
 
 def export_to_csv(filename: str = "exported_recipes.csv") -> None:
@@ -31,8 +31,7 @@ def export_to_csv(filename: str = "exported_recipes.csv") -> None:
     Args:
         filename: The name of the CSV file to create. Defaults to "exported_recipes.csv".
     """
-    session = SessionLocal()
-    try:
+    with get_db_session() as session:
         recipes = get_all_recipes(session)
 
         with open(filename, "w", newline="", encoding="utf-8") as csvfile:
@@ -45,11 +44,6 @@ def export_to_csv(filename: str = "exported_recipes.csv") -> None:
                 writer.writerow([r.id, r.name, ingredient_list, steps_flat])
 
         print(f"✅ Exported {len(recipes)} recipes to '{filename}'")
-    except Exception as e:
-        print(f"❌ Error exporting recipes: {e}")
-        raise
-    finally:
-        session.close()
 
 
 if __name__ == "__main__":

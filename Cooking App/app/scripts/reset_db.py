@@ -25,7 +25,7 @@ for key in list(sys.modules.keys()):
 
 # Now import normally - Python will use local source since PROJECT_ROOT is first in path
 from app.db.models import Ingredient, Recipe, Review, recipe_ingredient  # noqa: E402
-from app.db.session import SessionLocal  # noqa: E402
+from app.db.session import get_db_session  # noqa: E402
 
 
 def reset_database() -> None:
@@ -58,23 +58,21 @@ def reset_database() -> None:
         return
     print("🔄 Deleting data...")
 
-    session = SessionLocal()
-    try:
-        # Delete association table entries first
-        session.execute(recipe_ingredient.delete())
+    with get_db_session() as session:
+        try:
+            # Delete association table entries first
+            session.execute(recipe_ingredient.delete())
 
-        # Then delete dependent tables
-        session.query(Review).delete()
-        session.query(Recipe).delete()
-        session.query(Ingredient).delete()
+            # Then delete dependent tables
+            session.query(Review).delete()
+            session.query(Recipe).delete()
+            session.query(Ingredient).delete()
 
-        session.commit()
-        print("✅ Database reset complete!")
-    except SQLAlchemyError as e:
-        session.rollback()
-        print(f"❌ Error: {e}")
-    finally:
-        session.close()
+            session.commit()
+            print("✅ Database reset complete!")
+        except SQLAlchemyError as e:
+            session.rollback()
+            print(f"❌ Error: {e}")
 
 
 if __name__ == "__main__":

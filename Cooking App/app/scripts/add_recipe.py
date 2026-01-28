@@ -24,7 +24,7 @@ for key in list(sys.modules.keys()):
 # Now import normally - Python will use local source since PROJECT_ROOT is first in path
 from app.db.db_helpers import store_recipe_in_db  # noqa: E402
 from app.db.models import Ingredient, Recipe  # noqa: E402
-from app.db.session import SessionLocal  # noqa: E402
+from app.db.session import get_db_session  # noqa: E402
 
 
 def read_recipe():
@@ -116,63 +116,58 @@ def save_recipe(name, steps, ingredients_input):
         IntegrityError: If a database constraint violation occurs.
         OperationalError: If a database connection or operational error occurs.
     """
-    session = SessionLocal()
-    try:
-        # Check for duplicates (case-insensitive)
-        existing = session.query(Recipe).filter(Recipe.name.ilike(name)).first()
-        if existing:
-            print(f"⚠️ Recipe '{name}' already exists (id={existing.id}).")
-            return
+    with get_db_session() as session:
+        try:
+            # Check for duplicates (case-insensitive)
+            existing = session.query(Recipe).filter(Recipe.name.ilike(name)).first()
+            if existing:
+                print(f"⚠️ Recipe '{name}' already exists (id={existing.id}).")
+                return
 
-        recipe = Recipe(name=name, steps=steps)
+            recipe = Recipe(name=name, steps=steps)
 
-        # Reuse or create ingredients (stored lowercase)
-        for ing_name in ingredients_input:
-            norm = ing_name.strip().lower()
-            if not norm:
-                continue
-            ingredient = (
-                session.query(Ingredient).filter(Ingredient.name == norm).first()
+            # Reuse or create ingredients (stored lowercase)
+            for ing_name in ingredients_input:
+                norm = ing_name.strip().lower()
+                if not norm:
+                    continue
+                ingredient = (
+                    session.query(Ingredient).filter(Ingredient.name == norm).first()
+                )
+                if not ingredient:
+                    ingredient = Ingredient(name=norm)
+                    session.add(ingredient)
+                    session.flush()
+                recipe.ingredients.append(ingredient)
+
+            session.add(recipe)
+            session.commit()
+            print(
+                f"✅ Recipe '{name}' added successfully with {len(recipe.ingredients)} ingredients (id={recipe.id})."
             )
-            if not ingredient:
-                ingredient = Ingredient(name=norm)
-                session.add(ingredient)
-                session.flush()
-            recipe.ingredients.append(ingredient)
-
-        session.add(recipe)
-        session.commit()
-        print(
-            f"✅ Recipe '{name}' added successfully with {len(recipe.ingredients)} ingredients (id={recipe.id})."
-        )
-    except IntegrityError as e:
-        session.rollback()
-        print(f"❌ Database constraint error: {e}")
-        raise
-    except OperationalError as e:
-        session.rollback()
-        print(f"❌ Database connection error: {e}")
-        raise
-    except SQLAlchemyError as e:
-        session.rollback()
-        print(f"❌ Database error: {e}")
-        raise
-    except (AttributeError, TypeError, ValueError) as e:
-        session.rollback()
-        print(f"❌ Data validation error: {e}")
-        raise
-    finally:
-        session.close()
+        except IntegrityError as e:
+            session.rollback()
+            print(f"❌ Database constraint error: {e}")
+            raise
+        except OperationalError as e:
+            session.rollback()
+            print(f"❌ Database connection error: {e}")
+            raise
+        except SQLAlchemyError as e:
+            session.rollback()
+            print(f"❌ Database error: {e}")
+            raise
+        except (AttributeError, TypeError, ValueError) as e:
+            session.rollback()
+            print(f"❌ Data validation error: {e}")
+            raise
 
 
 if __name__ == "__main__":
     name, ingredients, steps = read_recipe()
     print(f"You entered {name}\ningredients: {ingredients} \nsteps: {steps}")
     # save_recipe(name, steps, ingredients)
-    session = SessionLocal()
-    try:
+    with get_db_session() as session:
         store_recipe_in_db(
             {"name": name, "steps": steps, "ingredients": ingredients}, session
         )
-    finally:
-        session.close()
