@@ -31,4 +31,4 @@ def submit_review(payload: ReviewIn, db: Session = Depends(get_db)):
         review = db_helpers.store_review_in_db(payload.model_dump(), db)
         return {"message": "Review submitted successfully", "review": review}
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e

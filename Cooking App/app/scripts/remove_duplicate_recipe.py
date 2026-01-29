@@ -10,6 +10,9 @@ from collections import defaultdict
 
 from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
 
+from app.db.models import Recipe
+from app.db.session import get_db_session
+
 # Setup: Ensure project root is in Python path when running from scripts directory
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROJECT_ROOT = os.path.abspath(os.path.join(_SCRIPT_DIR, "..", ".."))
@@ -22,8 +25,7 @@ for key in list(sys.modules.keys()):
         del sys.modules[key]
 
 # Now import normally - Python will use local source since PROJECT_ROOT is first in path
-from app.db.models import Recipe  # noqa: E402
-from app.db.session import get_db_session  # noqa: E402
+  # noqa: E402
 
 
 def normalize_name(name: str) -> str:
@@ -79,8 +81,8 @@ def find_duplicate_recipes(confirm: bool = True) -> None:
             for recipe in all_recipes:
                 if not recipe.name:
                     continue
-                key = normalize_name(recipe.name)
-                name_map[key].append(recipe)
+                normalized_name = normalize_name(recipe.name)
+                name_map[normalized_name].append(recipe)
 
             duplicates = {name: recs for name, recs in name_map.items() if len(recs) > 1}
 

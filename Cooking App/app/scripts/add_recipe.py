@@ -116,10 +116,10 @@ def save_recipe(name, steps, ingredients_input):
         IntegrityError: If a database constraint violation occurs.
         OperationalError: If a database connection or operational error occurs.
     """
-    with get_db_session() as session:
+    with get_db_session() as db_session:
         try:
             # Check for duplicates (case-insensitive)
-            existing = session.query(Recipe).filter(Recipe.name.ilike(name)).first()
+            existing = db_session.query(Recipe).filter(Recipe.name.ilike(name)).first()
             if existing:
                 print(f"⚠️ Recipe '{name}' already exists (id={existing.id}).")
                 return
@@ -132,42 +132,42 @@ def save_recipe(name, steps, ingredients_input):
                 if not norm:
                     continue
                 ingredient = (
-                    session.query(Ingredient).filter(Ingredient.name == norm).first()
+                    db_session.query(Ingredient).filter(Ingredient.name == norm).first()
                 )
                 if not ingredient:
                     ingredient = Ingredient(name=norm)
-                    session.add(ingredient)
-                    session.flush()
+                    db_session.add(ingredient)
+                    db_session.flush()
                 recipe.ingredients.append(ingredient)
 
-            session.add(recipe)
-            session.commit()
+            db_session.add(recipe)
+            db_session.commit()
             print(
                 f"✅ Recipe '{name}' added successfully with {len(recipe.ingredients)} ingredients (id={recipe.id})."
             )
         except IntegrityError as e:
-            session.rollback()
+            db_session.rollback()
             print(f"❌ Database constraint error: {e}")
             raise
         except OperationalError as e:
-            session.rollback()
+            db_session.rollback()
             print(f"❌ Database connection error: {e}")
             raise
         except SQLAlchemyError as e:
-            session.rollback()
+            db_session.rollback()
             print(f"❌ Database error: {e}")
             raise
         except (AttributeError, TypeError, ValueError) as e:
-            session.rollback()
+            db_session.rollback()
             print(f"❌ Data validation error: {e}")
             raise
 
 
 if __name__ == "__main__":
-    name, ingredients, steps = read_recipe()
-    print(f"You entered {name}\ningredients: {ingredients} \nsteps: {steps}")
-    # save_recipe(name, steps, ingredients)
+    recipe_name, recipe_ingredients, recipe_steps = read_recipe()
+    print(f"You entered {recipe_name}\ningredients: {recipe_ingredients} \nsteps: {recipe_steps}")
+    # save_recipe(recipe_name, steps, ingredients)
     with get_db_session() as session:
         store_recipe_in_db(
-            {"name": name, "steps": steps, "ingredients": ingredients}, session
+            {"name": recipe_name, "steps": recipe_steps, "ingredients": recipe_ingredients}, session
         )

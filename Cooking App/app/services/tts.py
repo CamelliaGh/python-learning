@@ -15,13 +15,13 @@ def generate_tts_audio(text):
         BytesIO: Audio stream containing the generated speech.
 
     Raises:
-        Exception: If no text is provided.
+        ValueError: If no text is provided.
     """
-    if not text:
+    if text:
         tts = gTTS(text)
         audio_io = BytesIO()
         tts.write_to_fp(audio_io)
         audio_io.seek(0)
         return audio_io
     else:
-        raise Exception(detail="No text provided")
+        raise ValueError("No text provided")

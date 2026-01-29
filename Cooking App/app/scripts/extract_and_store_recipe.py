@@ -28,14 +28,22 @@ from app.tools.openai_response_parser import get_recipe_items  # noqa: E402
 
 
 def extract_and_store_recipe(html_str):
-    response = call_api(
+    """Extract and store a recipe from HTML content.
+
+    Args:
+        html_str: The HTML content to extract the recipe from.
+
+    Returns:
+        dict: The extracted recipe data.
+    """
+    api_response = call_api(
         "system_extract_recipe", "user_extract_recipe", {"html": html_str}
     )
 
-    if not response:
+    if not api_response:
         raise ValueError("Failed to extract recipe from HTML.")
 
-    return response
+    return api_response
 
 
 if __name__ == "__main__":
