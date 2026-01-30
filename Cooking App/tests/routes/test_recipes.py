@@ -3,6 +3,7 @@
 from unittest.mock import patch
 
 from app.db.models import Ingredient, Recipe, Review
+from app.tools.openai_response_parser import RecipeParseError
 
 
 class TestGetRecipe:
@@ -90,6 +91,18 @@ class TestGetAllRecipesPaginated:
         data = response.json()
         assert len(data["recipes"]) == 0
         assert data["total"] == 0
+
+    def test_get_all_recipes_invalid_page(self, client):
+        """Test pagination with invalid page number."""
+        response = client.get("/api/recipes?page=0")
+
+        assert response.status_code == 422
+
+    def test_get_all_recipes_invalid_per_page(self, client):
+        """Test pagination with per_page exceeding maximum."""
+        response = client.get("/api/recipes?per_page=101")
+
+        assert response.status_code == 422
 
 
 class TestGetRecipeSteps:
@@ -181,6 +194,15 @@ class TestGetRecipesByIngredients:
 
         assert response.status_code == 200
         assert len(response.json()) == 1
+
+    def test_get_recipes_by_ingredients_whitespace_only(self, client):
+        """Test request with ingredients list containing only whitespace."""
+        response = client.post(
+            "/api/recipes/by-ingredients", json={"ingredients": ["   ", "\t"]}
+        )
+
+        assert response.status_code == 400
+        assert "empty" in response.json()["detail"].lower()
 
 
 class TestGetRandomRecipe:
@@ -300,3 +322,37 @@ Steps:
         # Should handle the exception and return 500
         assert response.status_code == 500
         assert "Invalid recipe format" in response.json()["detail"]
+
+    @patch("app.routes.recipes.openai")
+    @patch("app.routes.recipes.openai_parser.get_recipe_items")
+    def test_generate_recipe_parse_error(self, mock_parser, mock_openai, client):
+        """Test handling RecipeParseError from parser."""
+        mock_openai.return_value = "Malformed response"
+        mock_parser.side_effect = RecipeParseError("Invalid name format")
+
+        response = client.post(
+            "/api/recipes/generate", json={"ingredients": ["chicken"]}
+        )
+
+        assert response.status_code == 500
+        assert "Failed to parse AI response" in response.json()["detail"]
+
+    @patch("app.routes.recipes.openai")
+    @patch("app.routes.recipes.openai_parser.get_recipe_items")
+    def test_generate_recipe_invalid_response_format(self, mock_parser, mock_openai, client):
+        """Test handling TypeError/ValueError from parser (invalid AI response format)."""
+        mock_openai.return_value = "Some response"
+        mock_parser.side_effect = ValueError("Invalid structure")
+
+        response = client.post(
+            "/api/recipes/generate", json={"ingredients": ["chicken"]}
+        )
+
+        assert response.status_code == 500
+        assert "Invalid response format" in response.json()["detail"]
+
+    def test_generate_recipe_missing_body(self, client):
+        """Test generating recipe with missing request body."""
+        response = client.post("/api/recipes/generate")
+
+        assert response.status_code == 422
