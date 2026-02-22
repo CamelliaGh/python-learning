@@ -18,7 +18,6 @@ from request import Request
 logger = logging.getLogger("elevator.controller")
 
 
-
 class ElevatorController:
     """Controller for the elevator system."""
 
@@ -29,7 +28,11 @@ class ElevatorController:
             Elevator("Elevator 3", max_floor),
         ]
         self.max_floor = max_floor
-        logger.info("controller init: max_floor=%s, elevators=%s", max_floor, [e.elevator_id for e in self.elevators])
+        logger.info(
+            "controller init: max_floor=%s, elevators=%s",
+            max_floor,
+            [e.elevator_id for e in self.elevators],
+        )
 
     def select_best_elevator(self, floor: int, direction: Direction) -> Elevator:
         """Select the best elevator: same direction or IDLE if any, else closest (handled when it reverses).
@@ -52,11 +55,21 @@ class ElevatorController:
                     min_distance_same = distance
                     best_same_direction = elev
         if best_same_direction is not None:
-            logger.debug("select_best_elevator floor=%s dir=%s -> %s (same direction)", floor, direction.value, best_same_direction.elevator_id)
+            logger.debug(
+                "select_best_elevator floor=%s dir=%s -> %s (same direction)",
+                floor,
+                direction.value,
+                best_same_direction.elevator_id,
+            )
             return best_same_direction
         # All moving opposite: assign to closest; elevator will handle it when it reverses
         fallback = min(self.elevators, key=lambda e: abs(e.current_floor - floor))
-        logger.debug("select_best_elevator floor=%s dir=%s -> %s (fallback, will reverse)", floor, direction.value, fallback.elevator_id)
+        logger.debug(
+            "select_best_elevator floor=%s dir=%s -> %s (fallback, will reverse)",
+            floor,
+            direction.value,
+            fallback.elevator_id,
+        )
         return fallback
 
     def add_request(self, request: Request) -> None:
@@ -64,7 +77,10 @@ class ElevatorController:
         best = self.select_best_elevator(request.origin, request.direction)
         logger.info(
             "add_request origin=%s target=%s dir=%s -> assigned to %s",
-            request.origin, request.target, request.direction.value, best.elevator_id,
+            request.origin,
+            request.target,
+            request.direction.value,
+            best.elevator_id,
         )
         if request.direction == Direction.UP:
             best.send_up_request(request)
