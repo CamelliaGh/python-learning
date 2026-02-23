@@ -19,8 +19,6 @@ class Game:
             player2: Second player (Player instance).
         """
         self._board = Board(rows, columns)
-        self._rows = rows
-        self._columns = columns
         self._player1 = player1
         self._player2 = player2
         self._current_player = player1 if random.randint(0, 1) == 0 else player2
@@ -42,13 +40,39 @@ class Game:
             The chosen column index.
 
         Raises:
-            ValueError: If the input is invalid or the column is full.
+            ValueError: If input is invalid (non-numeric, etc.) or the move is invalid (out of range, column full).
         """
-        user_input = input(f"{player.get_name()}'s turn: enter a column between 0 and {self._columns - 1}: ")
-        if not self._board.is_valid_move(int(user_input)):
-            print("Invalid move. Try again.")
-            raise ValueError("Invalid move. Try again.")
-        return int(user_input)
+        max_col = self._board.max_column_index
+        user_input = input(f"{player.get_name()}'s turn: enter a column between 0 and {max_col}: ").strip()
+        column = self._parse_column_input(user_input)
+        self._validate_column_move(column)
+        return column
+
+    def _parse_column_input(self, user_input: str) -> int:
+        """Parse user input into a column index. Input validation only (format/type).
+
+        Returns:
+            The column index as an integer.
+
+        Raises:
+            ValueError: If the input is not a number.
+        """
+        try:
+            return int(user_input)
+        except ValueError:
+            raise ValueError("Please enter a number.")
+
+    def _validate_column_move(self, column: int) -> None:
+        """Check that the column is a valid move according to game rules.
+
+        Raises:
+            ValueError: If the column is out of range or full.
+        """
+        max_col = self._board.max_column_index
+        if not self._board.is_valid_move(column):
+            raise ValueError(f"Invalid column. Enter a number between 0 and {max_col}.")
+        if self._board.is_column_full(column):
+            raise ValueError("That column is full. Choose another.")
 
     def get_row(self, column):
         """Return the row index where a disc would land in the given column."""

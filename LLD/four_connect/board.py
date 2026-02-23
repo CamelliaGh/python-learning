@@ -18,9 +18,28 @@ class Board:
             print('|'.join(row))
             print('-' * (self._columns * 2 - 1))
 
+    @property
+    def rows(self):
+        """Number of rows on the board."""
+        return self._rows
+
+    @property
+    def columns(self):
+        """Number of columns on the board."""
+        return self._columns
+
+    @property
+    def max_column_index(self):
+        """Largest valid column index (0-based)."""
+        return self._columns - 1
+
     def is_valid_move(self, col):
         """Return True if a disc can be dropped in the given column."""
         return 0 <= col < self._columns
+
+    def is_column_full(self, col):
+        """Return True if the given column has no empty cell."""
+        return self._board[0][col] != ' '
 
     def get_row(self, column):
         """Return the lowest empty row index for the given column.
@@ -63,8 +82,14 @@ class Board:
 
     def check_diagonal_win(self, disc_color):
         """Return True if any diagonal has four consecutive discs of the given color."""
+        # Top-left to bottom-right (direction 1, 1)
         for i in range(len(self._board) - 3):
             for j in range(len(self._board[0]) - 3):
                 if self._board[i][j] == disc_color and self._board[i+1][j+1] == disc_color and self._board[i+2][j+2] == disc_color and self._board[i+3][j+3] == disc_color:
+                    return True
+        # Top-right to bottom-left (direction 1, -1)
+        for i in range(len(self._board) - 3):
+            for j in range(3, len(self._board[0])):
+                if self._board[i][j] == disc_color and self._board[i+1][j-1] == disc_color and self._board[i+2][j-2] == disc_color and self._board[i+3][j-3] == disc_color:
                     return True
         return False
