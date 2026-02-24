@@ -7,7 +7,6 @@ import threading
 
 from movie import Movie
 from reservation import Reservation
-from screen import Screen
 from seat import Seat
 from show_time import ShowTime
 from theatre import Theatre
@@ -119,51 +118,3 @@ class BookingSystem:
         return showtime.get_screen().get_seats()
 
 
-if __name__ == "__main__":
-    # create a few theaters, screens, seats, showtimes, movies
-
-    seat1 = Seat("A1", "A", 1)
-    seat2 = Seat("A2", "A", 2)
-    seat3 = Seat("B1", "B", 1)
-    seat4 = Seat("B2", "B", 2)
-    seat5 = Seat("C1", "C", 1)
-    seat6 = Seat("C2", "C", 2)
-    seat7 = Seat("D1", "D", 1)
-    seat8 = Seat("D2", "D", 2)
-
-    screen1 = Screen("Screen 1", seats=[seat1, seat2])
-    screen2 = Screen("Screen 2", seats=[seat3, seat4])
-    screen3 = Screen("Screen 3", seats=[seat5, seat6])
-    screen4 = Screen("Screen 4", seats=[seat7, seat8])
-
-    movie1 = Movie("Movie 1", "1")
-    movie2 = Movie("Movie 2", "2")
-    movie3 = Movie("Movie 3", "3")
-    movie4 = Movie("Movie 4", "4")
-
-    showtime1 = ShowTime("1", movie1, screen1, "2026-01-01", "10:00")
-    showtime2 = ShowTime("2", movie2, screen2, "2026-01-01", "10:00")
-    showtime3 = ShowTime("3", movie3, screen3, "2026-01-01", "10:00")
-    showtime4 = ShowTime("4", movie4, screen4, "2026-01-01", "10:00")
-
-    theater1 = Theatre(
-        "Theater1", screens=[screen1, screen2], show_times=[showtime1, showtime2]
-    )
-    theater2 = Theatre(
-        "Theater2", screens=[screen3, screen4], show_times=[showtime3, showtime4]
-    )
-
-
-    booking_system = BookingSystem([theater1, theater2])
-    print(booking_system.get_movies())
-    print(booking_system.get_movies(theater1, "2026-01-01"))
-    print(booking_system.get_movies(theater2, "2026-01-01"))
-    print(booking_system.get_seats(showtime1))
-    print(booking_system.get_seats(showtime2))
-    print(booking_system.get_seats(showtime3))
-    print(booking_system.get_seats(showtime4))
-
-    reservation = booking_system.book(showtime1, [seat1, seat2], "1")
-    print(reservation)
-   
-    print(booking_system.cancel(reservation.id))
