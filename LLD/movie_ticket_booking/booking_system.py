@@ -3,6 +3,7 @@
 import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
+import threading
 
 from movie import Movie
 from reservation import Reservation
@@ -29,6 +30,7 @@ class BookingSystem:
         """
         self.theaters: List[Theatre] = theaters
         self.reservations: Dict[str, Reservation] = {}
+        self._lock = threading.Lock()
 
     def get_showtimes_at_theater(self, theater: Theatre) -> List[ShowTime]:
         """Return all show times at the given theatre."""
@@ -49,21 +51,21 @@ class BookingSystem:
             ValueError: If any seat is already booked, any seat is not on the
                 show's screen, or the show time is not available.
         """
-        if any(seat.is_booked() for seat in seats):
-            raise ValueError("One or more seats are already booked")
-        screen_seats = set(showtime.get_screen().get_seats())
-        if not all(seat in screen_seats for seat in seats):
-            raise ValueError("One or more seats are not in this show's screen")
-        if not showtime.is_available():
-            raise ValueError("Showtime is not available")
-
-        reservation_id = str(uuid.uuid4())
-        user = self.get_user(user_id)
-        reservation = Reservation(reservation_id, showtime, seats, user)
-        reservation.book()
-        self.reservations[reservation_id] = reservation
-        user.reservations.append(reservation)
-        return reservation
+        with self._lock:
+            if any(seat.is_booked() for seat in seats):
+                raise ValueError("One or more seats are already booked")
+            screen_seats = set(showtime.get_screen().get_seats())
+            if not all(seat in screen_seats for seat in seats):
+                raise ValueError("One or more seats are not in this show's screen")
+            if not showtime.is_available():
+                raise ValueError("Showtime is not available")
+            reservation_id = str(uuid.uuid4())
+            user = self.get_user(user_id)
+            reservation = Reservation(reservation_id, showtime, seats, user)
+            reservation.book()
+            self.reservations[reservation_id] = reservation
+            user.reservations.append(reservation)
+            return reservation
 
     def cancel(self, reservation_id: str) -> Reservation:
         """Cancel the reservation with the given id.
@@ -74,15 +76,19 @@ class BookingSystem:
         Raises:
             ValueError: If no reservation exists with that id.
         """
-        reservation = self.reservations.get(reservation_id)
-        if not reservation:
-            raise ValueError("Reservation not found")
-        reservation.cancel()
-        return reservation
+        with self._lock:    
+            reservation = self.reservations.get(reservation_id)
+            if not reservation:
+                raise ValueError("Reservation not found")
+            reservation.cancel()
+            del self.reservations[reservation_id]
+            self.get_user(reservation.user.id).reservations.remove(reservation)
+            return reservation  
 
     def get_reservations(self, user_id: str) -> List[Reservation]:
-        """Return all reservations for the given user."""
-        return self.get_user(user_id).get_reservations()
+        """Return a snapshot of all reservations for the given user (thread-safe)."""
+        with self._lock:
+            return list(self.get_user(user_id).get_reservations())
 
     def get_movies(
         self,
